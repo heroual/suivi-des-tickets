@@ -12,8 +12,8 @@ import PKICalculator from './components/PKICalculator';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { saveTickets, loadTickets } from './utils/storage';
 import { calculatePKI } from './utils/pki';
+import { addTicket, getTickets, updateTicket } from './services/firebase';
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -21,13 +21,22 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedTickets = loadTickets();
-    if (savedTickets.length > 0) {
-      setTickets(savedTickets);
-    }
+    loadTickets();
   }, []);
+
+  const loadTickets = async () => {
+    try {
+      const loadedTickets = await getTickets();
+      setTickets(loadedTickets);
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const calculateDailyStats = () => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -54,52 +63,74 @@ function App() {
 
   useEffect(() => {
     calculateDailyStats();
-    saveTickets(tickets);
   }, [tickets]);
 
-  const handleNewTicket = (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
-    const newTicket: Ticket = {
-      ...ticketData,
-      id: Math.random().toString(36).substr(2, 9),
-      reopened: false,
-      reopenCount: 0,
-    };
-    setTickets((prev) => [...prev, newTicket]);
-    setIsMobileMenuOpen(false);
+  const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
+    try {
+      const newTicket: Omit<Ticket, 'id'> = {
+        ...ticketData,
+        reopened: false,
+        reopenCount: 0,
+      };
+      const id = await addTicket(newTicket);
+      setTickets((prev) => [...prev, { ...newTicket, id }]);
+      setIsMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Error adding ticket:', error);
+    }
   };
 
-  const handleCloseTicket = (id: string) => {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === id
-          ? {
-              ...ticket,
-              status: 'CLOTURE',
-              dateCloture: new Date(),
-              delaiRespect: new Date().getTime() - ticket.dateCreation.getTime() <= 24 * 60 * 60 * 1000,
-            }
-          : ticket
-      )
-    );
+  const handleCloseTicket = async (id: string) => {
+    try {
+      const updateData = {
+        status: 'CLOTURE' as const,
+        dateCloture: new Date(),
+        delaiRespect: new Date().getTime() - tickets.find(t => t.id === id)!.dateCreation.getTime() <= 24 * 60 * 60 * 1000,
+      };
+      await updateTicket(id, updateData);
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === id
+            ? { ...ticket, ...updateData }
+            : ticket
+        )
+      );
+    } catch (error) {
+      console.error('Error closing ticket:', error);
+    }
   };
 
-  const handleReopenTicket = (id: string) => {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === id
-          ? {
-              ...ticket,
-              status: 'EN_COURS',
-              dateCloture: undefined,
-              reopened: true,
-              reopenCount: ticket.reopenCount + 1,
-            }
-          : ticket
-      )
-    );
+  const handleReopenTicket = async (id: string) => {
+    try {
+      const ticket = tickets.find(t => t.id === id)!;
+      const updateData = {
+        status: 'EN_COURS' as const,
+        dateCloture: undefined,
+        reopened: true,
+        reopenCount: ticket.reopenCount + 1,
+      };
+      await updateTicket(id, updateData);
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === id
+            ? { ...ticket, ...updateData }
+            : ticket
+        )
+      );
+    } catch (error) {
+      console.error('Error reopening ticket:', error);
+    }
   };
 
   const pki = calculatePKI(tickets);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
