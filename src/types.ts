@@ -14,6 +14,8 @@ export interface Ticket {
   technician: Technician;
   status: 'EN_COURS' | 'CLOTURE';
   delaiRespect: boolean;
+  reopened: boolean;
+  reopenCount: number;
 }
 
 export interface DailyStats {
@@ -21,9 +23,12 @@ export interface DailyStats {
   total: number;
   resolus: number;
   horsDelai: number;
+  reouvertures: number;
 }
 
-export interface CauseStats {
-  name: CauseType;
-  value: number;
+export interface PKIStats {
+  resolutionRate: number;
+  delaiRespectRate: number;
+  reopenRate: number;
+  globalPKI: number;
 }

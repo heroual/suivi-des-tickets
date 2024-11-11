@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator } from 'lucide-react';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
 import Dashboard from './components/Dashboard';
 import DailySummary from './components/DailySummary';
 import CauseTypeChart from './components/CauseTypeChart';
 import MonthlyStats from './components/MonthlyStats';
+import AppInfo from './components/AppInfo';
+import PKIDisplay from './components/PKIDisplay';
+import PKICalculator from './components/PKICalculator';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { saveTickets, loadTickets } from './utils/storage';
+import { calculatePKI } from './utils/pki';
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showPKICalculator, setShowPKICalculator] = useState(false);
 
   useEffect(() => {
     const savedTickets = loadTickets();
@@ -34,6 +40,7 @@ function App() {
       total: todayTickets.length,
       resolus: todayTickets.filter((t) => t.status === 'CLOTURE').length,
       horsDelai: todayTickets.filter((t) => !t.delaiRespect).length,
+      reouvertures: todayTickets.filter((t) => t.reopened).length,
     };
 
     setDailyStats((prev) => {
@@ -50,10 +57,12 @@ function App() {
     saveTickets(tickets);
   }, [tickets]);
 
-  const handleNewTicket = (ticketData: Omit<Ticket, 'id'>) => {
+  const handleNewTicket = (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
     const newTicket: Ticket = {
       ...ticketData,
       id: Math.random().toString(36).substr(2, 9),
+      reopened: false,
+      reopenCount: 0,
     };
     setTickets((prev) => [...prev, newTicket]);
     setIsMobileMenuOpen(false);
@@ -74,6 +83,24 @@ function App() {
     );
   };
 
+  const handleReopenTicket = (id: string) => {
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === id
+          ? {
+              ...ticket,
+              status: 'EN_COURS',
+              dateCloture: undefined,
+              reopened: true,
+              reopenCount: ticket.reopenCount + 1,
+            }
+          : ticket
+      )
+    );
+  };
+
+  const pki = calculatePKI(tickets);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow sticky top-0 z-50">
@@ -85,17 +112,32 @@ function App() {
                 Suivi des Tickets SAV TAROUDANT
               </h1>
             </div>
-            <button
-              className="md:hidden rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? 'Fermer' : 'Nouveau Ticket'}
-            </button>
+            <div className="flex items-center space-x-4">
+              <button
+                className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                onClick={() => setShowPKICalculator(true)}
+              >
+                <Calculator className="w-5 h-5" />
+              </button>
+              <button
+                className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                onClick={() => setShowInfo(true)}
+              >
+                <Info className="w-5 h-5" />
+              </button>
+              <button
+                className="md:hidden rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? 'Fermer' : 'Nouveau Ticket'}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <PKIDisplay stats={pki} />
         <DailySummary tickets={tickets} />
         
         {/* Mobile Form Overlay */}
@@ -121,10 +163,17 @@ function App() {
                 <CauseTypeChart tickets={tickets} />
               </div>
             </div>
-            <TicketList tickets={tickets} onCloseTicket={handleCloseTicket} />
+            <TicketList 
+              tickets={tickets} 
+              onCloseTicket={handleCloseTicket} 
+              onReopenTicket={handleReopenTicket}
+            />
           </div>
         </div>
       </main>
+
+      <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
     </div>
   );
 }

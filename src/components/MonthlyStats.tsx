@@ -27,6 +27,7 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
       total: dayTickets.length,
       resolus: dayTickets.filter(t => t.status === 'CLOTURE').length,
       horsDelai: dayTickets.filter(t => !t.delaiRespect).length,
+      reouvertures: dayTickets.filter(t => t.reopened).length,
     };
   });
 
@@ -44,6 +45,11 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
       t.dateCreation >= monthInterval.start && 
       t.dateCreation <= monthInterval.end && 
       !t.delaiRespect
+    ).length,
+    reouvertures: tickets.filter(t => 
+      t.dateCreation >= monthInterval.start && 
+      t.dateCreation <= monthInterval.end && 
+      t.reopened
     ).length,
   };
 
@@ -63,6 +69,9 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
           <div className="text-sm">
             <span className="text-red-600 font-semibold">{monthTotals.horsDelai}</span> Hors Délai
           </div>
+          <div className="text-sm">
+            <span className="text-amber-600 font-semibold">{monthTotals.reouvertures}</span> Réouvertures
+          </div>
         </div>
       </div>
       <div className="h-[400px]">
@@ -76,6 +85,7 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
             <Bar dataKey="total" name="Total" fill="#3B82F6" />
             <Bar dataKey="resolus" name="Résolus" fill="#10B981" />
             <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" />
+            <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" />
           </BarChart>
         </ResponsiveContainer>
       </div>

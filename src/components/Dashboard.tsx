@@ -21,6 +21,7 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
             <Bar dataKey="total" name="Total" fill="#3B82F6" />
             <Bar dataKey="resolus" name="Résolus" fill="#10B981" />
             <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" />
+            <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" />
           </BarChart>
         </ResponsiveContainer>
       </div>

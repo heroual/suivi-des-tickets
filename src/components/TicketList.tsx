@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Clock, AlertCircle, User } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, User, RefreshCw } from 'lucide-react';
 import type { Ticket } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -7,9 +7,10 @@ import { fr } from 'date-fns/locale';
 interface TicketListProps {
   tickets: Ticket[];
   onCloseTicket: (id: string) => void;
+  onReopenTicket: (id: string) => void;
 }
 
-export default function TicketList({ tickets, onCloseTicket }: TicketListProps) {
+export default function TicketList({ tickets, onCloseTicket, onReopenTicket }: TicketListProps) {
   const getStatusIcon = (ticket: Ticket) => {
     if (ticket.status === 'CLOTURE') {
       return ticket.delaiRespect ? (
@@ -40,6 +41,12 @@ export default function TicketList({ tickets, onCloseTicket }: TicketListProps) 
                     <User className="w-4 h-4 mr-1" />
                     <span className="text-sm">{ticket.technician}</span>
                   </div>
+                  {ticket.reopenCount > 0 && (
+                    <div className="flex items-center text-amber-600">
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      <span className="text-sm">Réouvert {ticket.reopenCount}x</span>
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm text-gray-500">
                   {format(ticket.dateCreation, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
@@ -50,14 +57,23 @@ export default function TicketList({ tickets, onCloseTicket }: TicketListProps) 
                 <span className="font-medium">Type: {ticket.causeType}</span>
                 <span>Cause: {ticket.cause}</span>
               </div>
-              {ticket.status === 'EN_COURS' && (
-                <button
-                  onClick={() => onCloseTicket(ticket.id)}
-                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Clôturer le ticket
-                </button>
-              )}
+              <div className="mt-3 space-x-3">
+                {ticket.status === 'EN_COURS' ? (
+                  <button
+                    onClick={() => onCloseTicket(ticket.id)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  >
+                    Clôturer le ticket
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onReopenTicket(ticket.id)}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                  >
+                    Réouvrir le ticket
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {tickets.length === 0 && (
