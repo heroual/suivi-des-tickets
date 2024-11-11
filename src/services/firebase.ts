@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, Timestamp, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import type { Ticket } from '../types';
 
@@ -44,6 +44,38 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
     return docRef.id;
   } catch (error) {
     console.error('Error adding ticket:', error);
+    throw error;
+  }
+}
+
+export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<Ticket[]> {
+  const batch = writeBatch(db);
+  const newTickets: Ticket[] = [];
+
+  try {
+    for (const ticket of tickets) {
+      const docRef = doc(ticketsCollection);
+      const newTicket: Omit<Ticket, 'id'> = {
+        ...ticket,
+        reopened: false,
+        reopenCount: 0,
+      };
+
+      batch.set(docRef, {
+        ...newTicket,
+        dateCreation: Timestamp.fromDate(ticket.dateCreation),
+        dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
+        createdAt: Timestamp.now(),
+        userId: auth.currentUser?.uid
+      });
+
+      newTickets.push({ ...newTicket, id: docRef.id });
+    }
+
+    await batch.commit();
+    return newTickets;
+  } catch (error) {
+    console.error('Error adding multiple tickets:', error);
     throw error;
   }
 }

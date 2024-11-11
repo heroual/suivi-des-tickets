@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet } from 'lucide-react';
 import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
@@ -11,11 +11,12 @@ import AppInfo from './components/AppInfo';
 import PKIDisplay from './components/PKIDisplay';
 import PKICalculator from './components/PKICalculator';
 import AuthModal from './components/AuthModal';
+import ExcelImport from './components/ExcelImport';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { calculatePKI } from './utils/pki';
-import { addTicket, getTickets, updateTicket, auth, logoutUser } from './services/firebase';
+import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -24,6 +25,7 @@ function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showExcelImport, setShowExcelImport] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,6 +99,16 @@ function App() {
       setIsMobileMenuOpen(false);
     } catch (error) {
       console.error('Error adding ticket:', error);
+    }
+  };
+
+  const handleImportTickets = async (importedTickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
+    try {
+      const newTickets = await addMultipleTickets(importedTickets);
+      setTickets((prev) => [...prev, ...newTickets]);
+      setShowExcelImport(false);
+    } catch (error) {
+      console.error('Error importing tickets:', error);
     }
   };
 
@@ -176,11 +188,18 @@ function App() {
                 <>
                   <span className="text-sm text-gray-600">{currentUser.email}</span>
                   <button
+                    onClick={() => setShowExcelImport(true)}
+                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100"
+                  >
+                    <FileSpreadsheet className="w-5 h-5" />
+                    <span className="hidden sm:inline">Importer Excel</span>
+                  </button>
+                  <button
                     onClick={handleLogout}
                     className="flex items-center space-x-2 rounded-md px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100"
                   >
                     <LogOut className="w-5 h-5" />
-                    <span>Déconnexion</span>
+                    <span className="hidden sm:inline">Déconnexion</span>
                   </button>
                 </>
               ) : (
@@ -281,6 +300,11 @@ function App() {
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
       <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <ExcelImport 
+        isOpen={showExcelImport} 
+        onClose={() => setShowExcelImport(false)}
+        onImport={handleImportTickets}
+      />
     </div>
   );
 }
