@@ -36,7 +36,7 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
     if (total === 0) return { serviceType: type, pki: 0, totalTickets: 0, ticketsOnTime: 0 };
     
     const pki = (onTime / total) * 100;
-    const finalPKI = pki >= 75 ? pki : 0;
+    const finalPKI = pki >= 75 ? pki : pki;
     
     return {
       serviceType: type,
@@ -77,11 +77,10 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
       (data.fibreOnTime + data.adslOnTime + data.degroupageOnTime);
 
     const globalPKI = totalTickets > 0 ? (totalOnTime / totalTickets) * 100 : 0;
-    const finalGlobalPKI = globalPKI >= 75 ? globalPKI : 0;
 
     setResults({
-      globalPKI: finalGlobalPKI,
-      servicesPKI: [fibrePKI, adslPKI, degroupagePKI],
+      globalPKI,
+      servicesPKI: [fibrePKI, adslPKI, degroupagePKI].filter(s => s.totalTickets > 0),
     });
   };
 
@@ -240,27 +239,26 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
 
           {results && (
             <div className="mt-8 space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">Résultats PKI</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <PKIResult
+                pki={results.globalPKI}
+                label="PKI Global"
+                details={{
+                  total: results.servicesPKI.reduce((acc, s) => acc + s.totalTickets, 0),
+                  onTime: results.servicesPKI.reduce((acc, s) => acc + s.ticketsOnTime, 0),
+                }}
+              />
+              <div className="grid grid-cols-1 gap-6">
+                {results.servicesPKI.map(service => (
                   <PKIResult
-                    pki={results.globalPKI}
-                    label="PKI Global"
+                    key={service.serviceType}
+                    pki={service.pki}
+                    label={service.serviceType}
+                    details={{
+                      total: service.totalTickets,
+                      onTime: service.ticketsOnTime,
+                    }}
                   />
-                  <div className="space-y-4">
-                    {results.servicesPKI.map(service => (
-                      <PKIResult
-                        key={service.serviceType}
-                        pki={service.pki}
-                        label={service.serviceType}
-                        details={{
-                          total: service.totalTickets,
-                          onTime: service.ticketsOnTime,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}

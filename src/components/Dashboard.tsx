@@ -18,10 +18,10 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="total" name="Total" fill="#3B82F6" />
-            <Bar dataKey="resolus" name="Résolus" fill="#10B981" />
-            <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" />
-            <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" />
+            <Bar dataKey="total" name="Total" fill="#3B82F6" key="bar-total" />
+            <Bar dataKey="resolus" name="Résolus" fill="#10B981" key="bar-resolus" />
+            <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" key="bar-horsDelai" />
+            <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" key="bar-reouvertures" />
           </BarChart>
         </ResponsiveContainer>
       </div>
