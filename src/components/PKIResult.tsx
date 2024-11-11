@@ -11,22 +11,24 @@ interface PKIResultProps {
 }
 
 export default function PKIResult({ pki, label, details }: PKIResultProps) {
+  if (!details) return null;
+  
   const isSuccess = pki >= 75;
   const isWarning = pki > 0 && pki < 75;
+  const horsDelai = details.total - details.onTime;
+  const tauxRespectDelais = (details.onTime / details.total) * 100;
   
   const getAdvice = () => {
     if (!details) return [];
     
-    const lateTickets = details.total - details.onTime;
-    const latePercentage = (lateTickets / details.total) * 100;
-    
+    const latePercentage = (horsDelai / details.total) * 100;
     const advice = [];
     
     if (latePercentage >= 30) {
       advice.push("Prioriser les tickets les plus anciens");
       advice.push("Mettre en place un système d'alerte pour les tickets proches de l'échéance");
     }
-    if (lateTickets > 5) {
+    if (horsDelai > 5) {
       advice.push("Répartir équitablement la charge de travail entre les techniciens");
       advice.push("Identifier les causes récurrentes des retards");
     }
@@ -61,28 +63,26 @@ export default function PKIResult({ pki, label, details }: PKIResultProps) {
         </div>
 
         {/* Detailed Stats */}
-        {details && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-sm text-blue-700 font-medium">Total Tickets</div>
-              <div className="text-2xl font-bold text-blue-900">{details.total}</div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-sm text-green-700 font-medium">Dans les Délais</div>
-              <div className="text-2xl font-bold text-green-900">{details.onTime}</div>
-            </div>
-            <div className="bg-red-50 p-3 rounded-lg">
-              <div className="text-sm text-red-700 font-medium">Hors Délais</div>
-              <div className="text-2xl font-bold text-red-900">{details.total - details.onTime}</div>
-            </div>
-            <div className="bg-amber-50 p-3 rounded-lg">
-              <div className="text-sm text-amber-700 font-medium">Taux Respect Délais</div>
-              <div className="text-2xl font-bold text-amber-900">
-                {((details.onTime / details.total) * 100).toFixed(1)}%
-              </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="text-sm text-blue-700 font-medium">Total Tickets</div>
+            <div className="text-2xl font-bold text-blue-900">{details.total}</div>
+          </div>
+          <div className="bg-green-50 p-3 rounded-lg">
+            <div className="text-sm text-green-700 font-medium">Dans les Délais</div>
+            <div className="text-2xl font-bold text-green-900">{details.onTime}</div>
+          </div>
+          <div className="bg-red-50 p-3 rounded-lg">
+            <div className="text-sm text-red-700 font-medium">Hors Délais</div>
+            <div className="text-2xl font-bold text-red-900">{horsDelai}</div>
+          </div>
+          <div className="bg-amber-50 p-3 rounded-lg">
+            <div className="text-sm text-amber-700 font-medium">Taux Respect Délais</div>
+            <div className="text-2xl font-bold text-amber-900">
+              {tauxRespectDelais.toFixed(1)}%
             </div>
           </div>
-        )}
+        </div>
 
         {/* Status Message */}
         {isSuccess && (
@@ -116,7 +116,7 @@ export default function PKIResult({ pki, label, details }: PKIResultProps) {
         )}
 
         {/* Improvement Advice */}
-        {details && details.total > 0 && (
+        {details.total > 0 && (
           <div className="mt-4">
             <div className="flex items-center space-x-2 mb-2">
               <Lightbulb className="w-5 h-5 text-amber-500" />
