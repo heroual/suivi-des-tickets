@@ -16,6 +16,7 @@ export interface Ticket {
   delaiRespect: boolean;
   reopened: boolean;
   reopenCount: number;
+  motifCloture?: string;
 }
 
 export interface DailyStats {
@@ -31,4 +32,9 @@ export interface PKIStats {
   delaiRespectRate: number;
   reopenRate: number;
   globalPKI: number;
+}
+
+export interface CauseStats {
+  name: string;
+  value: number;
 }

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import type { Ticket } from '../types';
 
@@ -48,6 +48,48 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   }
 }
 
+export async function updateTicket(id: string, data: Partial<Ticket>): Promise<void> {
+  try {
+    const ticketRef = doc(db, 'tickets', id);
+    const updateData = {
+      ...data,
+      dateCloture: data.dateCloture ? Timestamp.fromDate(data.dateCloture) : null,
+      dateCreation: data.dateCreation ? Timestamp.fromDate(data.dateCreation) : null,
+      updatedAt: Timestamp.now()
+    };
+    await updateDoc(ticketRef, updateData);
+  } catch (error) {
+    console.error('Error updating ticket:', error);
+    throw error;
+  }
+}
+
+export async function deleteTicket(id: string): Promise<void> {
+  try {
+    const ticketRef = doc(db, 'tickets', id);
+    await deleteDoc(ticketRef);
+  } catch (error) {
+    console.error('Error deleting ticket:', error);
+    throw error;
+  }
+}
+
+export async function getTickets(): Promise<Ticket[]> {
+  try {
+    const q = query(ticketsCollection, orderBy('dateCreation', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      dateCreation: (doc.data().dateCreation as Timestamp).toDate(),
+      dateCloture: doc.data().dateCloture ? (doc.data().dateCloture as Timestamp).toDate() : undefined
+    })) as Ticket[];
+  } catch (error) {
+    console.error('Error getting tickets:', error);
+    throw error;
+  }
+}
+
 export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<Ticket[]> {
   const batch = writeBatch(db);
   const newTickets: Ticket[] = [];
@@ -76,37 +118,6 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
     return newTickets;
   } catch (error) {
     console.error('Error adding multiple tickets:', error);
-    throw error;
-  }
-}
-
-export async function getTickets(): Promise<Ticket[]> {
-  try {
-    const q = query(ticketsCollection, orderBy('dateCreation', 'desc'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      dateCreation: (doc.data().dateCreation as Timestamp).toDate(),
-      dateCloture: doc.data().dateCloture ? (doc.data().dateCloture as Timestamp).toDate() : undefined
-    })) as Ticket[];
-  } catch (error) {
-    console.error('Error getting tickets:', error);
-    throw error;
-  }
-}
-
-export async function updateTicket(id: string, data: Partial<Ticket>): Promise<void> {
-  try {
-    const ticketRef = doc(db, 'tickets', id);
-    const updateData = {
-      ...data,
-      dateCloture: data.dateCloture ? Timestamp.fromDate(data.dateCloture) : null,
-      updatedAt: Timestamp.now()
-    };
-    await updateDoc(ticketRef, updateData);
-  } catch (error) {
-    console.error('Error updating ticket:', error);
     throw error;
   }
 }
