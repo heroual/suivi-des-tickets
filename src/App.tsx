@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut } from 'lucide-react';
+import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
 import Dashboard from './components/Dashboard';
@@ -9,11 +10,12 @@ import MonthlyStats from './components/MonthlyStats';
 import AppInfo from './components/AppInfo';
 import PKIDisplay from './components/PKIDisplay';
 import PKICalculator from './components/PKICalculator';
+import AuthModal from './components/AuthModal';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { calculatePKI } from './utils/pki';
-import { addTicket, getTickets, updateTicket } from './services/firebase';
+import { addTicket, getTickets, updateTicket, auth, logoutUser } from './services/firebase';
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -21,7 +23,20 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      if (!user) {
+        setIsMobileMenuOpen(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     loadTickets();
@@ -66,6 +81,11 @@ function App() {
   }, [tickets]);
 
   const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       const newTicket: Omit<Ticket, 'id'> = {
         ...ticketData,
@@ -122,6 +142,14 @@ function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   const pki = calculatePKI(tickets);
 
   if (loading) {
@@ -144,6 +172,26 @@ function App() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              {currentUser ? (
+                <>
+                  <span className="text-sm text-gray-600">{currentUser.email}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Déconnexion</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span>Connexion</span>
+                </button>
+              )}
               <button
                 className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
                 onClick={() => setShowPKICalculator(true)}
@@ -156,12 +204,14 @@ function App() {
               >
                 <Info className="w-5 h-5" />
               </button>
-              <button
-                className="md:hidden rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? 'Fermer' : 'Nouveau Ticket'}
-              </button>
+              {currentUser && (
+                <button
+                  className="md:hidden rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  {isMobileMenuOpen ? 'Fermer' : 'Nouveau Ticket'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -171,24 +221,49 @@ function App() {
         <PKIDisplay stats={pki} />
         <DailySummary tickets={tickets} />
         
-        {/* Mobile Form Overlay */}
-        <div className={`md:hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className={`fixed inset-x-0 bottom-0 transform transition-transform ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'}`}>
-            <div className="bg-white rounded-t-xl shadow-lg max-h-[90vh] overflow-y-auto">
-              <div className="p-4">
-                <TicketForm onSubmit={handleNewTicket} />
+        {/* Mobile Form Overlay - Only shown when authenticated */}
+        {currentUser && (
+          <div className={`md:hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className={`fixed inset-x-0 bottom-0 transform transition-transform ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+              <div className="bg-white rounded-t-xl shadow-lg max-h-[90vh] overflow-y-auto">
+                <div className="p-4">
+                  <TicketForm onSubmit={handleNewTicket} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 gap-6">
           <MonthlyStats tickets={tickets} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <div className="hidden md:block">
-                <TicketForm onSubmit={handleNewTicket} />
-              </div>
+              {/* Desktop Form - Only shown when authenticated */}
+              {currentUser && (
+                <div className="hidden md:block">
+                  <TicketForm onSubmit={handleNewTicket} />
+                </div>
+              )}
+              {/* Show login prompt when not authenticated */}
+              {!currentUser && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Connectez-vous pour créer un ticket
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Vous devez être connecté pour pouvoir créer de nouveaux tickets.
+                    </p>
+                    <button
+                      onClick={() => setShowAuthModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <LogIn className="w-5 h-5 mr-2" />
+                      Se connecter
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Dashboard dailyStats={dailyStats} />
                 <CauseTypeChart tickets={tickets} />
@@ -205,6 +280,7 @@ function App() {
 
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
       <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }

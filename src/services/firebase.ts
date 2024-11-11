@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, Timestamp, query, orderBy } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import type { Ticket } from '../types';
 
 const firebaseConfig = {
@@ -13,10 +14,23 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+export const auth = getAuth(app);
 
-// Initialize Firestore with relaxed security rules for development
-// Note: In production, proper authentication should be implemented
 export const ticketsCollection = collection(db, 'tickets');
+
+export async function loginUser(email: string, password: string): Promise<User> {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  return userCredential.user;
+}
+
+export async function registerUser(email: string, password: string): Promise<User> {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  return userCredential.user;
+}
+
+export async function logoutUser(): Promise<void> {
+  await signOut(auth);
+}
 
 export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   try {
@@ -24,7 +38,8 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
       ...ticket,
       dateCreation: Timestamp.fromDate(ticket.dateCreation),
       dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
-      createdAt: Timestamp.now()
+      createdAt: Timestamp.now(),
+      userId: auth.currentUser?.uid
     });
     return docRef.id;
   } catch (error) {
