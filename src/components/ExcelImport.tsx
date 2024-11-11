@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Ticket } from '../types';
+import { format } from 'date-fns';
 
 interface ExcelImportProps {
   isOpen: boolean;
@@ -23,11 +24,15 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
   const validateTicket = (row: any): boolean => {
     return (
       row.ndLogin &&
-      ['FIBRE', 'ADSL', 'DEGROUPAGE'].includes(row.serviceType) &&
+      ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'].includes(row.serviceType) &&
       row.description &&
       row.cause &&
       ['Technique', 'Client', 'Casse'].includes(row.causeType) &&
-      ['BRAHIM', 'ABDERAHMAN', 'AXE'].includes(row.technician)
+      ['BRAHIM', 'ABDERAHMAN', 'AXE'].includes(row.technician) &&
+      row.dateCreation &&
+      row.dateCloture &&
+      row.delaiRespect !== undefined &&
+      row.motifCloture
     );
   };
 
@@ -60,9 +65,11 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
           cause: row.cause,
           causeType: row.causeType,
           technician: row.technician,
-          dateCreation: new Date(),
-          status: 'EN_COURS',
-          delaiRespect: true,
+          dateCreation: new Date(row.dateCreation),
+          dateCloture: new Date(row.dateCloture),
+          status: 'CLOTURE',
+          delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
+          motifCloture: row.motifCloture,
         });
       });
 
@@ -88,7 +95,6 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         message: `${tickets.length} tickets importés avec succès`,
       });
 
-      // Reset file input
       e.target.value = '';
     } catch (error) {
       setStatus({
@@ -101,22 +107,31 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
   };
 
   const downloadTemplate = () => {
+    const now = new Date();
     const template = [
       {
         ndLogin: 'ND123456',
         serviceType: 'FIBRE',
+        dateCreation: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
+        dateCloture: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
         description: 'Problème de connexion',
         cause: 'Coupure fibre',
         causeType: 'Technique',
-        technician: 'BRAHIM'
+        technician: 'BRAHIM',
+        delaiRespect: true,
+        motifCloture: 'Réparation effectuée'
       },
       {
         ndLogin: 'ND789012',
-        serviceType: 'ADSL',
-        description: 'Lenteur connexion',
-        cause: 'Configuration modem',
-        causeType: 'Client',
-        technician: 'ABDERAHMAN'
+        serviceType: 'FIXE',
+        dateCreation: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
+        dateCloture: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
+        description: 'Pas de tonalité',
+        cause: 'Problème ligne',
+        causeType: 'Technique',
+        technician: 'ABDERAHMAN',
+        delaiRespect: false,
+        motifCloture: 'Remplacement équipement'
       }
     ];
 
@@ -129,7 +144,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       B2: {
         type: 'list',
         operator: 'equal',
-        formula1: '"FIBRE,ADSL,DEGROUPAGE"',
+        formula1: '"FIBRE,ADSL,DEGROUPAGE,FIXE"',
         showErrorMessage: true,
         error: 'Valeur invalide',
         errorTitle: 'Erreur'
@@ -193,11 +208,15 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                   <h4 className="font-medium text-gray-900 mb-2">Structure requise :</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• ndLogin (ex: ND123456)</li>
-                    <li>• serviceType (FIBRE/ADSL/DEGROUPAGE)</li>
+                    <li>• serviceType (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
+                    <li>• dateCreation (format: YYYY-MM-DD HH:mm:ss)</li>
+                    <li>• dateCloture (format: YYYY-MM-DD HH:mm:ss)</li>
                     <li>• description (texte libre)</li>
                     <li>• cause (texte libre)</li>
                     <li>• causeType (Technique/Client/Casse)</li>
                     <li>• technician (BRAHIM/ABDERAHMAN/AXE)</li>
+                    <li>• delaiRespect (true/false)</li>
+                    <li>• motifCloture (texte libre)</li>
                   </ul>
                 </div>
               </div>

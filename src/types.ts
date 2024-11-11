@@ -1,4 +1,4 @@
-export type ServiceType = 'FIBRE' | 'ADSL' | 'DEGROUPAGE';
+export type ServiceType = 'FIBRE' | 'ADSL' | 'DEGROUPAGE' | 'FIXE';
 export type Technician = 'BRAHIM' | 'ABDERAHMAN' | 'AXE';
 export type CauseType = 'Technique' | 'Client' | 'Casse';
 

@@ -45,7 +45,6 @@ export default function TicketForm({ onSubmit, initialData, isEdit = false }: Ti
     });
 
     if (!isEdit) {
-      // Reset form only if it's not in edit mode
       setNdLogin('');
       setDescription('');
       setCause('');
@@ -91,6 +90,7 @@ export default function TicketForm({ onSubmit, initialData, isEdit = false }: Ti
               <option value="FIBRE">Fibre Optique</option>
               <option value="ADSL">ADSL</option>
               <option value="DEGROUPAGE">Dégroupage</option>
+              <option value="FIXE">Fixe</option>
             </select>
           </div>
         </div>
