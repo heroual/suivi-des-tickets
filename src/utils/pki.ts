@@ -6,32 +6,23 @@ export function calculatePKI(tickets: Ticket[]) {
       resolutionRate: 1,
       delaiRespectRate: 1,
       reopenRate: 0,
-      globalPKI: 1
+      globalPKI: 0
     };
   }
 
-  // Taux de résolution
-  const resolvedTickets = tickets.filter(t => t.status === 'CLOTURE');
-  const resolutionRate = resolvedTickets.length / tickets.length;
-
-  // Taux de respect des délais
-  const delaiRespectRate = resolvedTickets.filter(t => t.delaiRespect).length / 
-    (resolvedTickets.length || 1);
-
-  // Taux de réouverture
-  const reopenRate = tickets.filter(t => t.reopened).length / tickets.length;
-
-  // PKI Global (moyenne pondérée)
-  const globalPKI = (
-    resolutionRate * 0.4 + 
-    delaiRespectRate * 0.4 + 
-    (1 - reopenRate) * 0.2
-  );
+  const totalTickets = tickets.length;
+  const ticketsInTime = tickets.filter(t => t.delaiRespect).length;
+  
+  // Nouveau calcul PKI: (tickets dans les délais / total tickets) * 100
+  const pki = (ticketsInTime / totalTickets) * 100;
+  
+  // On retourne 0 si le PKI est inférieur à 75%
+  const finalPKI = pki >= 75 ? pki : 0;
 
   return {
-    resolutionRate,
-    delaiRespectRate,
-    reopenRate,
-    globalPKI
+    resolutionRate: ticketsInTime / totalTickets,
+    delaiRespectRate: ticketsInTime / totalTickets,
+    reopenRate: tickets.filter(t => t.reopened).length / totalTickets,
+    globalPKI: finalPKI
   };
 }

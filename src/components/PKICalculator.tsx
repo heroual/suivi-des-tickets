@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, X, Target } from 'lucide-react';
 import { ServiceType } from '../types';
+import PKIResult from './PKIResult';
 
 interface PKICalculatorProps {
   isOpen: boolean;
@@ -12,23 +13,18 @@ interface ServicePKI {
   pki: number;
   totalTickets: number;
   ticketsOnTime: number;
-  ticketsLate: number;
 }
 
 export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
   const [formData, setFormData] = useState({
     totalTickets: '',
     ticketsOnTime: '',
-    ticketsLate: '',
     fibreTickets: '',
     fibreOnTime: '',
-    fibreLate: '',
     adslTickets: '',
     adslOnTime: '',
-    adslLate: '',
     degroupageTickets: '',
     degroupageOnTime: '',
-    degroupageLate: '',
   });
 
   const [results, setResults] = useState<{
@@ -36,19 +32,17 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
     servicesPKI: ServicePKI[];
   } | null>(null);
 
-  const calculateServicePKI = (total: number, onTime: number, late: number, type: ServiceType): ServicePKI => {
-    if (total === 0) return { serviceType: type, pki: 0, totalTickets: 0, ticketsOnTime: 0, ticketsLate: 0 };
+  const calculateServicePKI = (total: number, onTime: number, type: ServiceType): ServicePKI => {
+    if (total === 0) return { serviceType: type, pki: 0, totalTickets: 0, ticketsOnTime: 0 };
     
-    const resolutionRate = (onTime + late) / total;
-    const timelinessRate = onTime / (onTime + late);
-    const pki = (resolutionRate * 0.6 + timelinessRate * 0.4) * 100;
+    const pki = (onTime / total) * 100;
+    const finalPKI = pki >= 75 ? pki : 0;
     
     return {
       serviceType: type,
-      pki,
+      pki: finalPKI,
       totalTickets: total,
       ticketsOnTime: onTime,
-      ticketsLate: late,
     };
   };
 
@@ -62,21 +56,18 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
     const fibrePKI = calculateServicePKI(
       data.fibreTickets,
       data.fibreOnTime,
-      data.fibreLate,
       'FIBRE'
     );
 
     const adslPKI = calculateServicePKI(
       data.adslTickets,
       data.adslOnTime,
-      data.adslLate,
       'ADSL'
     );
 
     const degroupagePKI = calculateServicePKI(
       data.degroupageTickets,
       data.degroupageOnTime,
-      data.degroupageLate,
       'DEGROUPAGE'
     );
 
@@ -84,15 +75,12 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
       (data.fibreTickets + data.adslTickets + data.degroupageTickets);
     const totalOnTime = data.ticketsOnTime || 
       (data.fibreOnTime + data.adslOnTime + data.degroupageOnTime);
-    const totalLate = data.ticketsLate || 
-      (data.fibreLate + data.adslLate + data.degroupageLate);
 
-    const globalResolutionRate = (totalOnTime + totalLate) / totalTickets;
-    const globalTimelinessRate = totalOnTime / (totalOnTime + totalLate);
-    const globalPKI = (globalResolutionRate * 0.6 + globalTimelinessRate * 0.4) * 100;
+    const globalPKI = totalTickets > 0 ? (totalOnTime / totalTickets) * 100 : 0;
+    const finalGlobalPKI = globalPKI >= 75 ? globalPKI : 0;
 
     setResults({
-      globalPKI,
+      globalPKI: finalGlobalPKI,
       servicesPKI: [fibrePKI, adslPKI, degroupagePKI],
     });
   };
@@ -122,7 +110,7 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
           </div>
 
           <form onSubmit={handleCalculate} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Global Stats */}
               <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
                 <h3 className="font-semibold text-blue-900">Statistiques Globales</h3>
@@ -148,130 +136,95 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
                     min="0"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Tickets Hors Délais</label>
-                  <input
-                    type="number"
-                    name="ticketsLate"
-                    value={formData.ticketsLate}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
               </div>
 
-              {/* FIBRE */}
-              <div className="space-y-4 p-4 bg-green-50 rounded-lg">
-                <h3 className="font-semibold text-green-900">FIBRE</h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Tickets</label>
-                  <input
-                    type="number"
-                    name="fibreTickets"
-                    value={formData.fibreTickets}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                    min="0"
-                  />
+              {/* Services */}
+              <div className="space-y-6">
+                {/* FIBRE */}
+                <div className="p-4 bg-green-50 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-green-900">FIBRE</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Total</label>
+                      <input
+                        type="number"
+                        name="fibreTickets"
+                        value={formData.fibreTickets}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
+                      <input
+                        type="number"
+                        name="fibreOnTime"
+                        value={formData.fibreOnTime}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
-                  <input
-                    type="number"
-                    name="fibreOnTime"
-                    value={formData.fibreOnTime}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hors Délais</label>
-                  <input
-                    type="number"
-                    name="fibreLate"
-                    value={formData.fibreLate}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                    min="0"
-                  />
-                </div>
-              </div>
 
-              {/* ADSL */}
-              <div className="space-y-4 p-4 bg-yellow-50 rounded-lg">
-                <h3 className="font-semibold text-yellow-900">ADSL</h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Tickets</label>
-                  <input
-                    type="number"
-                    name="adslTickets"
-                    value={formData.adslTickets}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                    min="0"
-                  />
+                {/* ADSL */}
+                <div className="p-4 bg-yellow-50 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-yellow-900">ADSL</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Total</label>
+                      <input
+                        type="number"
+                        name="adslTickets"
+                        value={formData.adslTickets}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
+                      <input
+                        type="number"
+                        name="adslOnTime"
+                        value={formData.adslOnTime}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
-                  <input
-                    type="number"
-                    name="adslOnTime"
-                    value={formData.adslOnTime}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hors Délais</label>
-                  <input
-                    type="number"
-                    name="adslLate"
-                    value={formData.adslLate}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                    min="0"
-                  />
-                </div>
-              </div>
 
-              {/* DEGROUPAGE */}
-              <div className="space-y-4 p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold text-purple-900">DEGROUPAGE</h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Tickets</label>
-                  <input
-                    type="number"
-                    name="degroupageTickets"
-                    value={formData.degroupageTickets}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
-                  <input
-                    type="number"
-                    name="degroupageOnTime"
-                    value={formData.degroupageOnTime}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hors Délais</label>
-                  <input
-                    type="number"
-                    name="degroupageLate"
-                    value={formData.degroupageLate}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                    min="0"
-                  />
+                {/* DEGROUPAGE */}
+                <div className="p-4 bg-purple-50 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-purple-900">DEGROUPAGE</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Total</label>
+                      <input
+                        type="number"
+                        name="degroupageTickets"
+                        value={formData.degroupageTickets}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Dans les Délais</label>
+                      <input
+                        type="number"
+                        name="degroupageOnTime"
+                        value={formData.degroupageOnTime}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -290,22 +243,21 @@ export default function PKICalculator({ isOpen, onClose }: PKICalculatorProps) {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold text-blue-900 mb-4">Résultats PKI</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded-lg shadow">
-                    <div className="text-xl font-bold text-blue-600">PKI Global</div>
-                    <div className="text-3xl font-bold mt-2">{results.globalPKI.toFixed(1)}%</div>
-                  </div>
+                  <PKIResult
+                    pki={results.globalPKI}
+                    label="PKI Global"
+                  />
                   <div className="space-y-4">
                     {results.servicesPKI.map(service => (
-                      <div key={service.serviceType} className="bg-white p-4 rounded-lg shadow">
-                        <div className="font-semibold text-gray-900">{service.serviceType}</div>
-                        <div className="text-2xl font-bold text-blue-600 mt-1">
-                          {service.pki.toFixed(1)}%
-                        </div>
-                        <div className="text-sm text-gray-500 mt-2">
-                          Total: {service.totalTickets} | Dans les délais: {service.ticketsOnTime} | 
-                          Hors délais: {service.ticketsLate}
-                        </div>
-                      </div>
+                      <PKIResult
+                        key={service.serviceType}
+                        pki={service.pki}
+                        label={service.serviceType}
+                        details={{
+                          total: service.totalTickets,
+                          onTime: service.ticketsOnTime,
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
