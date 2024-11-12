@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, LogIn, UserPlus, Loader } from 'lucide-react';
-import { loginUser, registerUser } from '../services/firebase';
+import { X, LogIn, Loader } from 'lucide-react';
+import { loginUser } from '../services/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -8,7 +8,6 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,11 +21,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await loginUser(email, password);
-      } else {
-        await registerUser(email, password);
-      }
+      await loginUser(email, password);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -40,9 +35,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {isLogin ? 'Connexion' : 'Inscription'}
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Connexion</h2>
             <button
               onClick={onClose}
               className="rounded-full p-1 hover:bg-gray-100 transition-colors"
@@ -87,30 +80,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             >
               {loading ? (
                 <Loader className="w-5 h-5 animate-spin" />
-              ) : isLogin ? (
+              ) : (
                 <>
                   <LogIn className="w-5 h-5 mr-2" />
                   Se connecter
                 </>
-              ) : (
-                <>
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  S'inscrire
-                </>
               )}
             </button>
-
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                {isLogin
-                  ? "Pas encore de compte ? S'inscrire"
-                  : 'Déjà un compte ? Se connecter'}
-              </button>
-            </div>
           </form>
         </div>
       </div>

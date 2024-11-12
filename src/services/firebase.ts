@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import type { Ticket } from '../types';
 
 const firebaseConfig = {
@@ -20,11 +20,6 @@ export const ticketsCollection = collection(db, 'tickets');
 
 export async function loginUser(email: string, password: string): Promise<User> {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
-}
-
-export async function registerUser(email: string, password: string): Promise<User> {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   return userCredential.user;
 }
 
