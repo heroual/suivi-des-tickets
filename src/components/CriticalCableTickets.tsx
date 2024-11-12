@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FileSpreadsheet, AlertTriangle, PlusCircle, X, Edit2, Trash2, Upload } from 'lucide-react';
+import { FileSpreadsheet, AlertTriangle, PlusCircle, X, Edit2, Trash2, Upload, LogIn } from 'lucide-react';
 import type { Ticket, ServiceType, Technician } from '../types';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { auth } from '../services/firebase';
 
 interface CriticalCableTicketsProps {
   tickets: Ticket[];
@@ -284,32 +285,44 @@ export default function CriticalCableTickets({
           </div>
         </div>
         <div className="flex space-x-2">
-          {onAddTicket && (
+          {auth.currentUser ? (
+            <>
+              {onAddTicket && (
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <PlusCircle className="w-5 h-5 mr-2" />
+                  Nouveau Ticket
+                </button>
+              )}
+              <label className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                <Upload className="w-5 h-5 mr-2" />
+                Importer Excel
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                />
+              </label>
+              <button
+                onClick={exportToExcel}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <FileSpreadsheet className="w-5 h-5 mr-2" />
+                Exporter Excel
+              </button>
+            </>
+          ) : (
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={() => document.dispatchEvent(new CustomEvent('show-auth-modal'))}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <PlusCircle className="w-5 h-5 mr-2" />
-              Nouveau Ticket
+              <LogIn className="w-5 h-5 mr-2" />
+              Se connecter pour gérer les tickets
             </button>
           )}
-          <label className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
-            <Upload className="w-5 h-5 mr-2" />
-            Importer Excel
-            <input
-              type="file"
-              className="hidden"
-              accept=".xlsx,.xls"
-              onChange={handleImportExcel}
-            />
-          </label>
-          <button
-            onClick={exportToExcel}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <FileSpreadsheet className="w-5 h-5 mr-2" />
-            Exporter Excel
-          </button>
         </div>
       </div>
 
@@ -331,9 +344,11 @@ export default function CriticalCableTickets({
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
                     Localité
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {auth.currentUser && (
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-red-200">
@@ -354,30 +369,32 @@ export default function CriticalCableTickets({
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
                         {locality}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(ticket)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(ticket.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
+                      {auth.currentUser && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEdit(ticket)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Modifier"
+                            >
+                              <Edit2 className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ticket.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
                 {criticalTickets.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-red-500">
+                    <td colSpan={auth.currentUser ? 5 : 4} className="px-6 py-4 text-center text-sm text-red-500">
                       Aucun ticket critique en attente de changement de câble
                     </td>
                   </tr>
