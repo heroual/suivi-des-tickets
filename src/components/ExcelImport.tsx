@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Ticket } from '../types';
-import { format } from 'date-fns';
+import { parse, format } from 'date-fns';
 
 interface ExcelImportProps {
   isOpen: boolean;
@@ -21,6 +21,14 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
 
   if (!isOpen) return null;
 
+  const parseDate = (dateStr: string) => {
+    try {
+      return parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
+    } catch (error) {
+      throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
+    }
+  };
+
   const validateTicket = (row: any): boolean => {
     return (
       row.ndLogin &&
@@ -32,7 +40,8 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       row.dateCreation &&
       row.dateCloture &&
       row.delaiRespect !== undefined &&
-      row.motifCloture
+      row.motifCloture &&
+      row.isReopened !== undefined
     );
   };
 
@@ -58,19 +67,25 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
           return;
         }
 
-        tickets.push({
-          ndLogin: row.ndLogin,
-          serviceType: row.serviceType,
-          description: row.description,
-          cause: row.cause,
-          causeType: row.causeType,
-          technician: row.technician,
-          dateCreation: new Date(row.dateCreation),
-          dateCloture: new Date(row.dateCloture),
-          status: 'CLOTURE',
-          delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
-          motifCloture: row.motifCloture,
-        });
+        try {
+          tickets.push({
+            ndLogin: row.ndLogin,
+            serviceType: row.serviceType,
+            description: row.description,
+            cause: row.cause,
+            causeType: row.causeType,
+            technician: row.technician,
+            dateCreation: parseDate(row.dateCreation),
+            dateCloture: parseDate(row.dateCloture),
+            status: 'CLOTURE',
+            delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
+            motifCloture: row.motifCloture,
+            reopened: row.isReopened === 'true' || row.isReopened === true,
+            reopenCount: row.isReopened === 'true' || row.isReopened === true ? 1 : 0
+          });
+        } catch (error) {
+          errors.push(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de format'}`);
+        }
       });
 
       if (errors.length > 0) {
@@ -112,26 +127,28 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       {
         ndLogin: 'ND123456',
         serviceType: 'FIBRE',
-        dateCreation: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
-        dateCloture: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
+        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
+        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
         description: 'Problème de connexion',
         cause: 'Coupure fibre',
         causeType: 'Technique',
         technician: 'BRAHIM',
         delaiRespect: true,
-        motifCloture: 'Réparation effectuée'
+        motifCloture: 'Réparation effectuée',
+        isReopened: false
       },
       {
         ndLogin: 'ND789012',
         serviceType: 'FIXE',
-        dateCreation: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
-        dateCloture: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
+        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
+        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
         description: 'Pas de tonalité',
         cause: 'Problème ligne',
         causeType: 'Technique',
         technician: 'ABDERAHMAN',
         delaiRespect: false,
-        motifCloture: 'Remplacement équipement'
+        motifCloture: 'Remplacement équipement',
+        isReopened: true
       }
     ];
 
@@ -161,6 +178,14 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         type: 'list',
         operator: 'equal',
         formula1: '"BRAHIM,ABDERAHMAN,AXE"',
+        showErrorMessage: true,
+        error: 'Valeur invalide',
+        errorTitle: 'Erreur'
+      },
+      K2: {
+        type: 'list',
+        operator: 'equal',
+        formula1: '"true,false"',
         showErrorMessage: true,
         error: 'Valeur invalide',
         errorTitle: 'Erreur'
@@ -209,14 +234,15 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• ndLogin (ex: ND123456)</li>
                     <li>• serviceType (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
-                    <li>• dateCreation (format: YYYY-MM-DD HH:mm:ss)</li>
-                    <li>• dateCloture (format: YYYY-MM-DD HH:mm:ss)</li>
+                    <li>• dateCreation (format: JJ/MM/AAAA HH:mm)</li>
+                    <li>• dateCloture (format: JJ/MM/AAAA HH:mm)</li>
                     <li>• description (texte libre)</li>
                     <li>• cause (texte libre)</li>
                     <li>• causeType (Technique/Client/Casse)</li>
                     <li>• technician (BRAHIM/ABDERAHMAN/AXE)</li>
                     <li>• delaiRespect (true/false)</li>
                     <li>• motifCloture (texte libre)</li>
+                    <li>• isReopened (true/false)</li>
                   </ul>
                 </div>
               </div>
