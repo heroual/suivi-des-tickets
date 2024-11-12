@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History } from 'lucide-react';
 import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
+import AllTickets from './components/AllTickets';
 import Dashboard from './components/Dashboard';
 import DailySummary from './components/DailySummary';
 import CauseTypeChart from './components/CauseTypeChart';
@@ -27,6 +28,7 @@ function App() {
   const [showPKICalculator, setShowPKICalculator] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -189,6 +191,15 @@ function App() {
                 <>
                   <span className="text-sm text-gray-600">{currentUser.email}</span>
                   <button
+                    onClick={() => setShowAllTickets(!showAllTickets)}
+                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  >
+                    <History className="w-5 h-5" />
+                    <span className="hidden sm:inline">
+                      {showAllTickets ? 'Tableau de bord' : 'Historique'}
+                    </span>
+                  </button>
+                  <button
                     onClick={() => setShowExcelImport(true)}
                     className="flex items-center space-x-2 rounded-md px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100"
                   >
@@ -238,65 +249,60 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <PKIDisplay stats={pki} />
-        <DailySummary tickets={tickets} />
-        <CriticalCableTickets tickets={tickets} />
-        
-        {/* Mobile Form Overlay - Only shown when authenticated */}
-        {currentUser && (
-          <div className={`md:hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <div className={`fixed inset-x-0 bottom-0 transform transition-transform ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'}`}>
-              <div className="bg-white rounded-t-xl shadow-lg max-h-[90vh] overflow-y-auto">
-                <div className="p-4">
-                  <TicketForm onSubmit={handleNewTicket} />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-6">
-          <MonthlyStats tickets={tickets} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              {/* Desktop Form - Only shown when authenticated */}
-              {currentUser && (
-                <div className="hidden md:block">
-                  <TicketForm onSubmit={handleNewTicket} />
-                </div>
-              )}
-              {/* Show login prompt when not authenticated */}
-              {!currentUser && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                  <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Connectez-vous pour créer un ticket
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Vous devez être connecté pour pouvoir créer de nouveaux tickets.
-                    </p>
-                    <button
-                      onClick={() => setShowAuthModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <LogIn className="w-5 h-5 mr-2" />
-                      Se connecter
-                    </button>
+        {showAllTickets ? (
+          <AllTickets tickets={tickets} />
+        ) : (
+          <>
+            <PKIDisplay stats={pki} />
+            <DailySummary tickets={tickets} />
+            <CriticalCableTickets 
+              tickets={tickets}
+              onAddTicket={handleNewTicket}
+              onUpdateTicket={updateTicket}
+              onDeleteTicket={handleCloseTicket}
+            />
+            
+            <div className="grid grid-cols-1 gap-6">
+              <MonthlyStats tickets={tickets} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  {currentUser && (
+                    <div className="hidden md:block">
+                      <TicketForm onSubmit={handleNewTicket} />
+                    </div>
+                  )}
+                  {!currentUser && (
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                      <div className="text-center">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Connectez-vous pour créer un ticket
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Vous devez être connecté pour pouvoir créer de nouveaux tickets.
+                        </p>
+                        <button
+                          onClick={() => setShowAuthModal(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          <LogIn className="w-5 h-5 mr-2" />
+                          Se connecter
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <Dashboard dailyStats={dailyStats} />
+                    <CauseTypeChart tickets={tickets} />
                   </div>
                 </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Dashboard dailyStats={dailyStats} />
-                <CauseTypeChart tickets={tickets} />
+                <TicketList 
+                  tickets={tickets}
+                  showOnlyNew={true}
+                />
               </div>
             </div>
-            <TicketList 
-              tickets={tickets} 
-              onCloseTicket={handleCloseTicket} 
-              onReopenTicket={handleReopenTicket}
-            />
-          </div>
-        </div>
+          </>
+        )}
       </main>
 
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
