@@ -17,6 +17,7 @@ export interface Ticket {
   reopened: boolean;
   reopenCount: number;
   motifCloture?: string;
+  imported?: boolean; // Track if ticket was imported
 }
 
 export interface DailyStats {

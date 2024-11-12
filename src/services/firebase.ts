@@ -34,7 +34,8 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
       dateCreation: Timestamp.fromDate(ticket.dateCreation),
       dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
       createdAt: Timestamp.now(),
-      userId: auth.currentUser?.uid
+      userId: auth.currentUser?.uid,
+      imported: false // Mark as not imported
     });
     return docRef.id;
   } catch (error) {
@@ -77,7 +78,8 @@ export async function getTickets(): Promise<Ticket[]> {
       id: doc.id,
       ...doc.data(),
       dateCreation: (doc.data().dateCreation as Timestamp).toDate(),
-      dateCloture: doc.data().dateCloture ? (doc.data().dateCloture as Timestamp).toDate() : undefined
+      dateCloture: doc.data().dateCloture ? (doc.data().dateCloture as Timestamp).toDate() : undefined,
+      imported: doc.data().imported || false
     })) as Ticket[];
   } catch (error) {
     console.error('Error getting tickets:', error);
@@ -96,6 +98,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
         ...ticket,
         reopened: false,
         reopenCount: 0,
+        imported: true // Mark as imported
       };
 
       batch.set(docRef, {
