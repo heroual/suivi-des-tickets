@@ -23,6 +23,7 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
     );
 
     return {
+      id: dayStr, // Add unique id for each data point
       date: format(day, 'd MMM', { locale: fr }),
       total: dayTickets.length,
       resolus: dayTickets.filter(t => t.status === 'CLOTURE').length,
@@ -82,10 +83,30 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="total" name="Total" fill="#3B82F6" />
-            <Bar dataKey="resolus" name="Résolus" fill="#10B981" />
-            <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" />
-            <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" />
+            <Bar 
+              dataKey="total" 
+              name="Total" 
+              fill="#3B82F6" 
+              key={`total-${monthInterval.start}`} 
+            />
+            <Bar 
+              dataKey="resolus" 
+              name="Résolus" 
+              fill="#10B981" 
+              key={`resolus-${monthInterval.start}`} 
+            />
+            <Bar 
+              dataKey="horsDelai" 
+              name="Hors Délai" 
+              fill="#EF4444" 
+              key={`horsDelai-${monthInterval.start}`} 
+            />
+            <Bar 
+              dataKey="reouvertures" 
+              name="Réouvertures" 
+              fill="#F59E0B" 
+              key={`reouvertures-${monthInterval.start}`} 
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
