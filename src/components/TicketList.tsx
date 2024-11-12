@@ -53,6 +53,10 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
     }
   };
 
+  const formatDate = (date: Date) => {
+    return format(date, 'dd/MM/yyyy HH:mm');
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -88,12 +92,13 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
                       <User className="w-4 h-4 mr-1" />
                       <span className="text-sm">{ticket.technician}</span>
                     </div>
-                    {ticket.reopenCount > 0 && (
-                      <div className="flex items-center text-amber-600">
-                        <RefreshCw className="w-4 h-4 mr-1" />
-                        <span className="text-sm">Réouvert {ticket.reopenCount}x</span>
-                      </div>
-                    )}
+                    <div className="flex items-center text-amber-600">
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      <span className="text-sm">
+                        Réouverture: {ticket.reopened ? 'Oui' : 'Non'}
+                        {ticket.reopenCount > 0 && ` (${ticket.reopenCount}x)`}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {onUpdateTicket && (
@@ -129,11 +134,11 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
 
                 <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
                   <span>
-                    Créé le: {format(ticket.dateCreation, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                    Créé le: {formatDate(ticket.dateCreation)}
                   </span>
                   {ticket.dateCloture && (
                     <span>
-                      Clôturé le: {format(ticket.dateCloture, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                      Clôturé le: {formatDate(ticket.dateCloture)}
                     </span>
                   )}
                   <span className={ticket.delaiRespect ? 'text-green-600' : 'text-red-600'}>
