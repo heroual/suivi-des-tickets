@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, User, RefreshCw, Trash2, Edit, Search } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, User, RefreshCw, Trash2, Edit, Search, X } from 'lucide-react';
 import type { Ticket } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -7,8 +7,8 @@ import TicketForm from './TicketForm';
 
 interface TicketListProps {
   tickets: Ticket[];
-  onUpdateTicket: (id: string, ticket: Omit<Ticket, 'id'>) => void;
-  onDeleteTicket: (id: string) => void;
+  onUpdateTicket?: (id: string, ticket: Omit<Ticket, 'id'>) => void;
+  onDeleteTicket?: (id: string) => void;
 }
 
 export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: TicketListProps) {
@@ -27,12 +27,18 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
     return <Clock className="w-5 h-5 text-yellow-500" />;
   };
 
-  const filteredTickets = tickets.filter(ticket =>
-    ticket.ndLogin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.cause.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.motifCloture?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTickets = tickets.filter(ticket => {
+    const search = searchTerm.toLowerCase();
+    const ndLogin = String(ticket.ndLogin).toLowerCase();
+    const description = String(ticket.description).toLowerCase();
+    const cause = String(ticket.cause).toLowerCase();
+    const motifCloture = ticket.motifCloture ? String(ticket.motifCloture).toLowerCase() : '';
+
+    return ndLogin.includes(search) ||
+           description.includes(search) ||
+           cause.includes(search) ||
+           motifCloture.includes(search);
+  });
 
   const handleEdit = (ticket: Ticket) => {
     setEditingTicket(ticket);
@@ -40,7 +46,7 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
   };
 
   const handleUpdate = (updatedTicket: Omit<Ticket, 'id'>) => {
-    if (editingTicket) {
+    if (editingTicket && onUpdateTicket) {
       onUpdateTicket(editingTicket.id, updatedTicket);
       setShowEditModal(false);
       setEditingTicket(null);
@@ -90,20 +96,24 @@ export default function TicketList({ tickets, onUpdateTicket, onDeleteTicket }: 
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(ticket)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
-                      title="Modifier"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteTicket(ticket.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-full"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {onUpdateTicket && (
+                      <button
+                        onClick={() => handleEdit(ticket)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                        title="Modifier"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                    )}
+                    {onDeleteTicket && (
+                      <button
+                        onClick={() => onDeleteTicket(ticket.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
