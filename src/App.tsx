@@ -12,6 +12,7 @@ import PKIDisplay from './components/PKIDisplay';
 import PKICalculator from './components/PKICalculator';
 import AuthModal from './components/AuthModal';
 import ExcelImport from './components/ExcelImport';
+import CriticalCableTickets from './components/CriticalCableTickets';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -239,6 +240,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <PKIDisplay stats={pki} />
         <DailySummary tickets={tickets} />
+        <CriticalCableTickets tickets={tickets} />
         
         {/* Mobile Form Overlay - Only shown when authenticated */}
         {currentUser && (
