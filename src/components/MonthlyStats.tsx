@@ -23,7 +23,7 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
     );
 
     return {
-      id: dayStr, // Add unique id for each data point
+      id: dayStr,
       date: format(day, 'd MMM', { locale: fr }),
       total: dayTickets.length,
       resolus: dayTickets.filter(t => t.status === 'CLOTURE').length,
@@ -87,25 +87,25 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
               dataKey="total" 
               name="Total" 
               fill="#3B82F6" 
-              key={`total-${monthInterval.start}`} 
+              key={`total-${monthInterval.start.getTime()}`} 
             />
             <Bar 
               dataKey="resolus" 
               name="Résolus" 
               fill="#10B981" 
-              key={`resolus-${monthInterval.start}`} 
+              key={`resolus-${monthInterval.start.getTime()}`} 
             />
             <Bar 
               dataKey="horsDelai" 
               name="Hors Délai" 
               fill="#EF4444" 
-              key={`horsDelai-${monthInterval.start}`} 
+              key={`horsDelai-${monthInterval.start.getTime()}`} 
             />
             <Bar 
               dataKey="reouvertures" 
               name="Réouvertures" 
               fill="#F59E0B" 
-              key={`reouvertures-${monthInterval.start}`} 
+              key={`reouvertures-${monthInterval.start.getTime()}`} 
             />
           </BarChart>
         </ResponsiveContainer>
