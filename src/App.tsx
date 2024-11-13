@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen } from 'lucide-react';
 import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
@@ -15,6 +15,7 @@ import PKICalculator from './components/PKICalculator';
 import AuthModal from './components/AuthModal';
 import ExcelImport from './components/ExcelImport';
 import CriticalCableTickets from './components/CriticalCableTickets';
+import Documentation from './components/Documentation';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -30,6 +31,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
+  const [showDocumentation, setShowDocumentation] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -203,6 +205,13 @@ function App() {
                 </button>
               )}
               <button
+                onClick={() => setShowDocumentation(true)}
+                className="rounded-md p-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
+                title="Documentation"
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
+              <button
                 className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
                 onClick={() => setShowPKICalculator(true)}
               >
@@ -292,6 +301,10 @@ function App() {
         isOpen={showExcelImport} 
         onClose={() => setShowExcelImport(false)}
         onImport={handleImportTickets}
+      />
+      <Documentation 
+        isOpen={showDocumentation} 
+        onClose={() => setShowDocumentation(false)} 
       />
     </div>
   );
