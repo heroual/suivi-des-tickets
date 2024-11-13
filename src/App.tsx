@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import DailySummary from './components/DailySummary';
 import CauseTypeChart from './components/CauseTypeChart';
 import MonthlyStats from './components/MonthlyStats';
+import MonthlyIndicators from './components/MonthlyIndicators';
 import AppInfo from './components/AppInfo';
 import PKIDisplay from './components/PKIDisplay';
 import PKICalculator from './components/PKICalculator';
@@ -135,28 +136,6 @@ function App() {
     }
   };
 
-  const handleReopenTicket = async (id: string) => {
-    try {
-      const ticket = tickets.find(t => t.id === id)!;
-      const updateData = {
-        status: 'EN_COURS' as const,
-        dateCloture: undefined,
-        reopened: true,
-        reopenCount: ticket.reopenCount + 1,
-      };
-      await updateTicket(id, updateData);
-      setTickets((prev) =>
-        prev.map((ticket) =>
-          ticket.id === id
-            ? { ...ticket, ...updateData }
-            : ticket
-        )
-      );
-    } catch (error) {
-      console.error('Error reopening ticket:', error);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -254,6 +233,7 @@ function App() {
         ) : (
           <>
             <PKIDisplay stats={pki} />
+            <MonthlyIndicators tickets={tickets} />
             <DailySummary tickets={tickets} />
             <CriticalCableTickets 
               tickets={tickets}
