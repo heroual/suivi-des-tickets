@@ -119,3 +119,61 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
     throw error;
   }
 }
+// Add new collection reference
+export const devicesCollection = collection(db, 'devices');
+
+// Add new functions for devices
+export async function addDevice(device: Omit<Device, 'id'>): Promise<string> {
+  try {
+    const docRef = await addDoc(devicesCollection, {
+      ...device,
+      dateInstalled: Timestamp.fromDate(device.dateInstalled),
+      createdAt: Timestamp.now(),
+      userId: auth.currentUser?.uid
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding device:', error);
+    throw error;
+  }
+}
+
+export async function updateDevice(id: string, data: Partial<Device>): Promise<void> {
+  try {
+    const deviceRef = doc(db, 'devices', id);
+    const updateData = {
+      ...data,
+      dateInstalled: data.dateInstalled ? Timestamp.fromDate(data.dateInstalled) : null,
+      updatedAt: Timestamp.now()
+    };
+    await updateDoc(deviceRef, updateData);
+  } catch (error) {
+    console.error('Error updating device:', error);
+    throw error;
+  }
+}
+
+export async function deleteDevice(id: string): Promise<void> {
+  try {
+    const deviceRef = doc(db, 'devices', id);
+    await deleteDoc(deviceRef);
+  } catch (error) {
+    console.error('Error deleting device:', error);
+    throw error;
+  }
+}
+
+export async function getDevices(): Promise<Device[]> {
+  try {
+    const q = query(devicesCollection, orderBy('dateInstalled', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      dateInstalled: (doc.data().dateInstalled as Timestamp).toDate()
+    })) as Device[];
+  } catch (error) {
+    console.error('Error getting devices:', error);
+    throw error;
+  }
+}

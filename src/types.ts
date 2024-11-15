@@ -39,3 +39,17 @@ export interface CauseStats {
   name: string;
   value: number;
 }
+// ... existing types remain the same ...
+
+export type DeviceType = 'FIBRE' | 'ADSL';
+
+export interface Device {
+  id: string;
+  ndLogin: string;
+  reclamationNumber: string;
+  type: DeviceType;
+  serialNumber: string;
+  address: string;
+  technician: Technician;
+  dateInstalled: Date;
+}

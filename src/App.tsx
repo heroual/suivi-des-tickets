@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router } from 'lucide-react';
 import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
 import TicketList from './components/TicketList';
@@ -17,6 +17,7 @@ import ExcelImport from './components/ExcelImport';
 import CriticalCableTickets from './components/CriticalCableTickets';
 import Documentation from './components/Documentation';
 import Analytics from './components/Analytics';
+import DeviceManagement from './components/DeviceManagement';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -34,6 +35,7 @@ function App() {
   const [showAllTickets, setShowAllTickets] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showDeviceManagement, setShowDeviceManagement] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -174,7 +176,24 @@ function App() {
                 <>
                   <span className="text-sm text-gray-600">{currentUser.email}</span>
                   <button
-                    onClick={() => setShowAnalytics(!showAnalytics)}
+                    onClick={() => {
+                      setShowAnalytics(false);
+                      setShowAllTickets(false);
+                      setShowDeviceManagement(!showDeviceManagement);
+                    }}
+                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  >
+                    <Router className="w-5 h-5" />
+                    <span className="hidden sm:inline">
+                      {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeviceManagement(false);
+                      setShowAllTickets(false);
+                      setShowAnalytics(!showAnalytics);
+                    }}
                     className="flex items-center space-x-2 rounded-md px-3 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
                   >
                     <BarChart2 className="w-5 h-5" />
@@ -183,7 +202,11 @@ function App() {
                     </span>
                   </button>
                   <button
-                    onClick={() => setShowAllTickets(!showAllTickets)}
+                    onClick={() => {
+                      setShowDeviceManagement(false);
+                      setShowAnalytics(false);
+                      setShowAllTickets(!showAllTickets);
+                    }}
                     className="flex items-center space-x-2 rounded-md px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100"
                   >
                     <History className="w-5 h-5" />
@@ -252,6 +275,8 @@ function App() {
           <Analytics tickets={tickets} />
         ) : showAllTickets ? (
           <AllTickets tickets={tickets} />
+        ) : showDeviceManagement ? (
+          <DeviceManagement />
         ) : (
           <>
             <PKIDisplay stats={pki} />
