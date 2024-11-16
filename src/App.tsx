@@ -27,7 +27,6 @@ import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTicke
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(true);
@@ -43,9 +42,6 @@ function App() {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
       setShowAuthModal(!user);
-      if (!user) {
-        setIsMobileMenuOpen(false);
-      }
       setLoading(false);
     });
 
@@ -108,7 +104,6 @@ function App() {
       };
       const id = await addTicket(newTicket);
       setTickets((prev) => [...prev, { ...newTicket, id }]);
-      setIsMobileMenuOpen(false);
     } catch (error) {
       console.error('Error adding ticket:', error);
     }
@@ -168,89 +163,115 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">
-                STICKETS - Suivi des Tickets SAV TAROUDANT
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{currentUser.email}</span>
-              <button
-                onClick={() => {
-                  setShowAnalytics(false);
-                  setShowAllTickets(false);
-                  setShowDeviceManagement(!showDeviceManagement);
-                }}
-                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-              >
-                <Router className="w-5 h-5" />
-                <span className="hidden sm:inline">
-                  {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  setShowDeviceManagement(false);
-                  setShowAllTickets(false);
-                  setShowAnalytics(!showAnalytics);
-                }}
-                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
-              >
-                <BarChart2 className="w-5 h-5" />
-                <span className="hidden sm:inline">
-                  {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  setShowDeviceManagement(false);
-                  setShowAnalytics(false);
-                  setShowAllTickets(!showAllTickets);
-                }}
-                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100"
-              >
-                <History className="w-5 h-5" />
-                <span className="hidden sm:inline">
-                  {showAllTickets ? 'Tableau de bord' : 'Historique'}
-                </span>
-              </button>
-              <button
-                onClick={() => setShowExcelImport(true)}
-                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100"
-              >
-                <FileSpreadsheet className="w-5 h-5" />
-                <span className="hidden sm:inline">Importer Excel</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="hidden sm:inline">Déconnexion</span>
-              </button>
-              <button
-                onClick={() => setShowDocumentation(true)}
-                className="rounded-md p-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
-                title="Documentation"
-              >
-                <BookOpen className="w-5 h-5" />
-              </button>
-              <button
-                className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                onClick={() => setShowPKICalculator(true)}
-              >
-                <Calculator className="w-5 h-5" />
-              </button>
-              <button
-                className="rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                onClick={() => setShowInfo(true)}
-              >
-                <Info className="w-5 h-5" />
-              </button>
+      <header className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-4">
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <LayoutDashboard className="w-10 h-10 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                    STICKETS
+                  </h1>
+                  <p className="text-lg text-gray-600 font-medium">
+                    Suivi des Tickets SAV TAROUDANT
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => {
+                    setShowAnalytics(false);
+                    setShowAllTickets(false);
+                    setShowDeviceManagement(!showDeviceManagement);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                >
+                  <Router className="w-6 h-6" />
+                  <span className="hidden sm:inline">
+                    {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowDeviceManagement(false);
+                    setShowAllTickets(false);
+                    setShowAnalytics(!showAnalytics);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                >
+                  <BarChart2 className="w-6 h-6" />
+                  <span className="hidden sm:inline">
+                    {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowDeviceManagement(false);
+                    setShowAnalytics(false);
+                    setShowAllTickets(!showAllTickets);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <History className="w-6 h-6" />
+                  <span className="hidden sm:inline">
+                    {showAllTickets ? 'Tableau de bord' : 'Historique'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setShowExcelImport(true)}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                >
+                  <FileSpreadsheet className="w-6 h-6" />
+                  <span className="hidden sm:inline">Importer Excel</span>
+                </button>
+
+                {currentUser ? (
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                  >
+                    <LogOut className="w-6 h-6" />
+                    <span className="hidden sm:inline">Déconnexion</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  >
+                    <LogIn className="w-6 h-6" />
+                    <span className="hidden sm:inline">Connexion</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowDocumentation(true)}
+                  className="p-2 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                  title="Documentation"
+                >
+                  <BookOpen className="w-6 h-6" />
+                </button>
+
+                <button
+                  className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  onClick={() => setShowPKICalculator(true)}
+                >
+                  <Calculator className="w-6 h-6" />
+                </button>
+
+                <button
+                  className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  onClick={() => setShowInfo(true)}
+                >
+                  <Info className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -306,6 +327,7 @@ function App() {
         isOpen={showDocumentation} 
         onClose={() => setShowDocumentation(false)} 
       />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
