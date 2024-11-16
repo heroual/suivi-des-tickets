@@ -30,7 +30,7 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(true);
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
@@ -42,17 +42,21 @@ function App() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
+      setShowAuthModal(!user);
       if (!user) {
         setIsMobileMenuOpen(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    loadTickets();
-  }, []);
+    if (currentUser) {
+      loadTickets();
+    }
+  }, [currentUser]);
 
   const loadTickets = async () => {
     try {
@@ -60,8 +64,6 @@ function App() {
       setTickets(loadedTickets);
     } catch (error) {
       console.error('Error loading tickets:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -154,10 +156,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  if (!currentUser) {
+    return <AuthModal isOpen={true} onClose={() => setShowAuthModal(false)} />;
   }
 
   return (
@@ -168,76 +174,64 @@ function App() {
             <div className="flex items-center space-x-3">
               <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
               <h1 className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">
-                Suivi des Tickets SAV TAROUDANT
+                STICKETS - Suivi des Tickets SAV TAROUDANT
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              {currentUser ? (
-                <>
-                  <span className="text-sm text-gray-600">{currentUser.email}</span>
-                  <button
-                    onClick={() => {
-                      setShowAnalytics(false);
-                      setShowAllTickets(false);
-                      setShowDeviceManagement(!showDeviceManagement);
-                    }}
-                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  >
-                    <Router className="w-5 h-5" />
-                    <span className="hidden sm:inline">
-                      {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDeviceManagement(false);
-                      setShowAllTickets(false);
-                      setShowAnalytics(!showAnalytics);
-                    }}
-                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
-                  >
-                    <BarChart2 className="w-5 h-5" />
-                    <span className="hidden sm:inline">
-                      {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDeviceManagement(false);
-                      setShowAnalytics(false);
-                      setShowAllTickets(!showAllTickets);
-                    }}
-                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  >
-                    <History className="w-5 h-5" />
-                    <span className="hidden sm:inline">
-                      {showAllTickets ? 'Tableau de bord' : 'Historique'}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setShowExcelImport(true)}
-                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100"
-                  >
-                    <FileSpreadsheet className="w-5 h-5" />
-                    <span className="hidden sm:inline">Importer Excel</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center space-x-2 rounded-md px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="hidden sm:inline">Déconnexion</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                >
-                  <LogIn className="w-5 h-5" />
-                  <span>Connexion</span>
-                </button>
-              )}
+              <span className="text-sm text-gray-600">{currentUser.email}</span>
+              <button
+                onClick={() => {
+                  setShowAnalytics(false);
+                  setShowAllTickets(false);
+                  setShowDeviceManagement(!showDeviceManagement);
+                }}
+                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+              >
+                <Router className="w-5 h-5" />
+                <span className="hidden sm:inline">
+                  {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeviceManagement(false);
+                  setShowAllTickets(false);
+                  setShowAnalytics(!showAnalytics);
+                }}
+                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
+              >
+                <BarChart2 className="w-5 h-5" />
+                <span className="hidden sm:inline">
+                  {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeviceManagement(false);
+                  setShowAnalytics(false);
+                  setShowAllTickets(!showAllTickets);
+                }}
+                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100"
+              >
+                <History className="w-5 h-5" />
+                <span className="hidden sm:inline">
+                  {showAllTickets ? 'Tableau de bord' : 'Historique'}
+                </span>
+              </button>
+              <button
+                onClick={() => setShowExcelImport(true)}
+                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+                <span className="hidden sm:inline">Importer Excel</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 rounded-md px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="hidden sm:inline">Déconnexion</span>
+              </button>
               <button
                 onClick={() => setShowDocumentation(true)}
                 className="rounded-md p-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
@@ -257,14 +251,6 @@ function App() {
               >
                 <Info className="w-5 h-5" />
               </button>
-              {currentUser && (
-                <button
-                  className="md:hidden rounded-md p-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                >
-                  {isMobileMenuOpen ? 'Fermer' : 'Nouveau Ticket'}
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -293,30 +279,7 @@ function App() {
               <MonthlyStats tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">
-                  {currentUser && (
-                    <div className="hidden md:block">
-                      <TicketForm onSubmit={handleNewTicket} />
-                    </div>
-                  )}
-                  {!currentUser && (
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                      <div className="text-center">
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          Connectez-vous pour créer un ticket
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          Vous devez être connecté pour pouvoir créer de nouveaux tickets.
-                        </p>
-                        <button
-                          onClick={() => setShowAuthModal(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <LogIn className="w-5 h-5 mr-2" />
-                          Se connecter
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <TicketForm onSubmit={handleNewTicket} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Dashboard dailyStats={dailyStats} />
                     <CauseTypeChart tickets={tickets} />
@@ -334,7 +297,6 @@ function App() {
 
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
       <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <ExcelImport 
         isOpen={showExcelImport} 
         onClose={() => setShowExcelImport(false)}
