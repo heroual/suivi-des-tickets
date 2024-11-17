@@ -233,4 +233,4 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
                 {Object.entries(stats.byTechnician).map(([tech, count]) => (
                   <div key={tech} className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <spa
+                    <span>
