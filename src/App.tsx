@@ -18,6 +18,8 @@ import CriticalCableTickets from './components/CriticalCableTickets';
 import Documentation from './components/Documentation';
 import Analytics from './components/Analytics';
 import DeviceManagement from './components/DeviceManagement';
+import AutoSignoutAlert from './components/AutoSignoutAlert';
+import { useAutoSignout } from './hooks/useAutoSignout';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -38,6 +40,10 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(300); // 5 minutes in seconds
+
+  // Initialize auto signout
+  useAutoSignout();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -439,80 +445,6 @@ function App() {
         onClose={() => setShowDocumentation(false)} 
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-    </div>
-  );
-}
-
-export default App;
-import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon } from 'lucide-react';
-import { User } from 'firebase/auth';
-import TicketForm from './components/TicketForm';
-import TicketList from './components/TicketList';
-import AllTickets from './components/AllTickets';
-import Dashboard from './components/Dashboard';
-import DailySummary from './components/DailySummary';
-import CauseTypeChart from './components/CauseTypeChart';
-import MonthlyStats from './components/MonthlyStats';
-import MonthlyIndicators from './components/MonthlyIndicators';
-import AppInfo from './components/AppInfo';
-import PKIDisplay from './components/PKIDisplay';
-import PKICalculator from './components/PKICalculator';
-import AuthModal from './components/AuthModal';
-import ExcelImport from './components/ExcelImport';
-import CriticalCableTickets from './components/CriticalCableTickets';
-import Documentation from './components/Documentation';
-import Analytics from './components/Analytics';
-import DeviceManagement from './components/DeviceManagement';
-import AutoSignoutAlert from './components/AutoSignoutAlert';
-import { useAutoSignout } from './hooks/useAutoSignout';
-import type { Ticket, DailyStats } from './types';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { calculatePKI } from './utils/pki';
-import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
-
-function App() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [showInfo, setShowInfo] = useState(false);
-  const [showPKICalculator, setShowPKICalculator] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(true);
-  const [showExcelImport, setShowExcelImport] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
-  const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [showDeviceManagement, setShowDeviceManagement] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(300); // 5 minutes in seconds
-
-  // Initialize auto signout
-  useAutoSignout();
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-      setShowAuthModal(!user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      loadTickets();
-    }
-  }, [currentUser]);
-
-  // Rest of the component remains exactly the same...
-  // ... (keeping all existing code and functionality)
-
-  return (
-    <div className="min-h-screen bg-gray-100 pb-safe-bottom">
-      {/* Existing JSX remains the same */}
       {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
     </div>
   );
