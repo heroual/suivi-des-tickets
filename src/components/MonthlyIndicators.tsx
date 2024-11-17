@@ -233,4 +233,19 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
                 {Object.entries(stats.byTechnician).map(([tech, count]) => (
                   <div key={tech} className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                    <span>
+                      <span className="text-sm font-medium text-gray-900">{tech}</span>
+                      <span className="text-xs text-gray-600">
+                        {getPercentage(count, stats.total)}%
+                      </span>
+                    </div>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 sm:mt-2">{count}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
