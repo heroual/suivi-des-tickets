@@ -176,7 +176,7 @@ export default function CriticalCableTickets({
 
   const TicketForm = ({ isEdit = false, onSubmit }: { isEdit?: boolean, onSubmit: (e: React.FormEvent) => void }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-gray-900">
@@ -271,32 +271,32 @@ export default function CriticalCableTickets({
   );
 
   return (
-    <div className="bg-red-50 p-6 rounded-lg shadow-md mb-6 border-2 border-red-500">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <AlertTriangle className="w-8 h-8 text-red-600 mr-2 animate-pulse" />
+    <div className="bg-red-50 p-4 sm:p-6 rounded-lg shadow-md mb-6 border-2 border-red-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-4">
+        <div className="flex items-start sm:items-center space-x-2">
+          <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 mt-1 sm:mt-0 animate-pulse" />
           <div>
-            <h2 className="text-2xl font-bold text-red-900">
-              ⚠️ TICKETS CRITIQUES - Changement de Câbles
+            <h2 className="text-xl sm:text-2xl font-bold text-red-900 leading-tight">
+              ⚠️ TICKETS CRITIQUES
             </h2>
-            <p className="text-red-700 text-sm mt-1">
-              Intervention urgente requise - Priorité maximale
+            <p className="text-sm text-red-700 mt-1">
+              Changement de Câbles - Intervention urgente requise
             </p>
           </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {auth.currentUser ? (
             <>
               {onAddTicket && (
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="btn-primary w-full sm:w-auto"
                 >
                   <PlusCircle className="w-5 h-5 mr-2" />
                   Nouveau Ticket
                 </button>
               )}
-              <label className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+              <label className="btn-primary w-full sm:w-auto cursor-pointer">
                 <Upload className="w-5 h-5 mr-2" />
                 Importer Excel
                 <input
@@ -308,7 +308,7 @@ export default function CriticalCableTickets({
               </label>
               <button
                 onClick={exportToExcel}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="btn-primary w-full sm:w-auto bg-red-600 hover:bg-red-700"
               >
                 <FileSpreadsheet className="w-5 h-5 mr-2" />
                 Exporter Excel
@@ -317,7 +317,7 @@ export default function CriticalCableTickets({
           ) : (
             <button
               onClick={() => document.dispatchEvent(new CustomEvent('show-auth-modal'))}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn-primary w-full sm:w-auto"
             >
               <LogIn className="w-5 h-5 mr-2" />
               Se connecter pour gérer les tickets
@@ -326,86 +326,129 @@ export default function CriticalCableTickets({
         </div>
       </div>
 
-      <div className="overflow-x-auto mt-6">
-        <div className="inline-block min-w-full align-middle">
+      <div className="overflow-x-auto mt-6 -mx-4 sm:mx-0">
+        <div className="inline-block min-w-full align-middle px-4 sm:px-0">
           <div className="overflow-hidden border-2 border-red-300 rounded-lg shadow-sm">
-            <table className="min-w-full divide-y divide-red-200">
-              <thead className="bg-red-100">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                    Numéro de ticket
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                    ND/Login
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                    Date d'enregistrement
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                    Localité
-                  </th>
-                  {auth.currentUser && (
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-red-200">
+            <div className="min-w-full divide-y divide-red-200">
+              {/* Mobile View */}
+              <div className="block sm:hidden">
                 {criticalTickets.map((ticket) => {
                   const locality = ticket.description.split(' - ')[0] || 'Non spécifiée';
-                  
                   return (
-                    <tr key={ticket.id} className="hover:bg-red-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-900">
-                        {ticket.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-900">
-                        {ticket.ndLogin}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
-                        {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
-                        {locality}
-                      </td>
-                      {auth.currentUser && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
+                    <div key={ticket.id} className="p-4 border-b border-red-200 bg-white">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="font-bold text-red-900">{ticket.ndLogin}</div>
+                          <div className="text-sm text-red-700">{locality}</div>
+                        </div>
+                        {auth.currentUser && (
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleEdit(ticket)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="Modifier"
+                              className="text-blue-600"
                             >
                               <Edit2 className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(ticket.id)}
-                              className="text-red-600 hover:text-red-800"
-                              title="Supprimer"
+                              className="text-red-600"
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
-                        </td>
-                      )}
-                    </tr>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm')}
+                      </div>
+                    </div>
                   );
                 })}
                 {criticalTickets.length === 0 && (
-                  <tr>
-                    <td colSpan={auth.currentUser ? 5 : 4} className="px-6 py-4 text-center text-sm text-red-500">
-                      Aucun ticket critique en attente de changement de câble
-                    </td>
-                  </tr>
+                  <div className="p-4 text-center text-sm text-red-500">
+                    Aucun ticket critique en attente
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Desktop View */}
+              <table className="hidden sm:table min-w-full divide-y divide-red-200">
+                <thead className="bg-red-100">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                      Numéro de ticket
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                      ND/Login
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                      Date d'enregistrement
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                      Localité
+                    </th>
+                    {auth.currentUser && (
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-red-900 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-red-200">
+                  {criticalTickets.map((ticket) => {
+                    const locality = ticket.description.split(' - ')[0] || 'Non spécifiée';
+                    return (
+                      <tr key={ticket.id} className="hover:bg-red-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-900">
+                          {ticket.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-900">
+                          {ticket.ndLogin}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
+                          {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
+                          {locality}
+                        </td>
+                        {auth.currentUser && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-red-900">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleEdit(ticket)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Modifier"
+                              >
+                                <Edit2 className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(ticket.id)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                  {criticalTickets.length === 0 && (
+                    <tr>
+                      <td colSpan={auth.currentUser ? 5 : 4} className="px-6 py-4 text-center text-sm text-red-500">
+                        Aucun ticket critique en attente de changement de câble
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
         <p className="text-sm font-bold text-red-700 flex items-center">
           <AlertTriangle className="w-4 h-4 mr-1" />
           {criticalTickets.length} ticket{criticalTickets.length > 1 ? 's' : ''} nécessitant un changement de câble
