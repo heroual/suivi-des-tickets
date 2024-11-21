@@ -31,7 +31,7 @@ function App() {
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
   const [showPKICalculator, setShowPKICalculator] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
@@ -39,10 +39,10 @@ function App() {
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(300); // 5 minutes in seconds
+  const [remainingTime, setRemainingTime] = useState(300);
 
-  // Initialize auto signout
   useAutoSignout();
 
   useEffect(() => {
@@ -50,22 +50,25 @@ function App() {
       setCurrentUser(user);
       setShowAuthModal(!user);
       setLoading(false);
+      
+      if (user) {
+        loadTickets();
+      } else {
+        setTickets([]);
+      }
     });
 
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      loadTickets();
-    }
-  }, [currentUser]);
-
   const loadTickets = async () => {
     try {
+      setError(null);
       const loadedTickets = await getTickets();
       setTickets(loadedTickets);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load tickets';
+      setError(errorMessage);
       console.error('Error loading tickets:', error);
     }
   };
@@ -109,20 +112,22 @@ function App() {
         reopened: false,
         reopenCount: 0,
       };
-      const id = await addTicket(newTicket);
-      setTickets((prev) => [...prev, { ...newTicket, id }]);
+      await addTicket(newTicket);
+      await loadTickets();
     } catch (error) {
       console.error('Error adding ticket:', error);
+      alert('Failed to add ticket. Please try again.');
     }
   };
 
   const handleImportTickets = async (importedTickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
     try {
-      const newTickets = await addMultipleTickets(importedTickets);
-      setTickets((prev) => [...prev, ...newTickets]);
+      await addMultipleTickets(importedTickets);
+      await loadTickets();
       setShowExcelImport(false);
     } catch (error) {
       console.error('Error importing tickets:', error);
+      alert('Failed to import tickets. Please try again.');
     }
   };
 
@@ -134,15 +139,10 @@ function App() {
         delaiRespect: new Date().getTime() - tickets.find(t => t.id === id)!.dateCreation.getTime() <= 24 * 60 * 60 * 1000,
       };
       await updateTicket(id, updateData);
-      setTickets((prev) =>
-        prev.map((ticket) =>
-          ticket.id === id
-            ? { ...ticket, ...updateData }
-            : ticket
-        )
-      );
+      await loadTickets();
     } catch (error) {
       console.error('Error closing ticket:', error);
+      alert('Failed to close ticket. Please try again.');
     }
   };
 
@@ -152,6 +152,7 @@ function App() {
       setMobileMenuOpen(false);
     } catch (error) {
       console.error('Error logging out:', error);
+      alert('Failed to log out. Please try again.');
     }
   };
 
@@ -167,6 +168,23 @@ function App() {
 
   if (!currentUser) {
     return <AuthModal isOpen={true} onClose={() => setShowAuthModal(false)} />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Data</h2>
+          <p className="text-gray-700 mb-4">{error}</p>
+          <button
+            onClick={loadTickets}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const MobileNav = () => (
