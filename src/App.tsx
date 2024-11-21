@@ -19,6 +19,7 @@ import Documentation from './components/Documentation';
 import Analytics from './components/Analytics';
 import DeviceManagement from './components/DeviceManagement';
 import AutoSignoutAlert from './components/AutoSignoutAlert';
+import ActionPlan from './components/ActionPlan';
 import { useAutoSignout } from './hooks/useAutoSignout';
 import type { Ticket, DailyStats } from './types';
 import { format } from 'date-fns';
@@ -422,6 +423,7 @@ function App() {
             <PKIDisplay stats={pki} />
             <MonthlyIndicators tickets={tickets} />
             <DailySummary tickets={tickets} />
+            <ActionPlan tickets={tickets} />
             <CriticalCableTickets 
               tickets={tickets}
               onAddTicket={handleNewTicket}
