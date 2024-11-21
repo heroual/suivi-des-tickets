@@ -101,8 +101,8 @@ export async function getTickets(): Promise<Ticket[]> {
       return {
         id: doc.id,
         ...data,
-        dateCreation: data.dateCreation.toDate(),
-        dateCloture: data.dateCloture ? data.dateCloture.toDate() : undefined,
+        dateCreation: data.dateCreation instanceof Timestamp ? data.dateCreation.toDate() : new Date(data.dateCreation),
+        dateCloture: data.dateCloture instanceof Timestamp ? data.dateCloture?.toDate() : data.dateCloture ? new Date(data.dateCloture) : undefined,
         imported: data.imported || false
       } as Ticket;
     });
@@ -207,7 +207,7 @@ export async function getDevices(): Promise<Device[]> {
       return {
         id: doc.id,
         ...data,
-        dateInstalled: data.dateInstalled.toDate()
+        dateInstalled: data.dateInstalled instanceof Timestamp ? data.dateInstalled.toDate() : new Date(data.dateInstalled)
       } as Device;
     });
   } catch (error) {
