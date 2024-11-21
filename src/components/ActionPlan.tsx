@@ -12,7 +12,8 @@ import {
   MapPin,
   Zap,
   Brain,
-  Network
+  Network,
+  Users
 } from 'lucide-react';
 import { format, subDays, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';

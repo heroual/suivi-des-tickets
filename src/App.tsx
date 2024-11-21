@@ -30,7 +30,6 @@ import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
 function App() {
-  const [showActionPlan, setShowActionPlan] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
@@ -448,13 +447,6 @@ function App() {
                   tickets={tickets}
                   showOnlyNew={true}
                 />
-                <ActionPlanButton onClick={() => setShowActionPlan(true)} />
-  <ActionPlanModal 
-    isOpen={showActionPlan}
-    onClose={() => setShowActionPlan(false)}
-    tickets={tickets}
-  />
-</>
               </div>
             </div>
           </>
@@ -477,6 +469,12 @@ function App() {
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
+      <ActionPlanButton onClick={() => setShowActionPlan(true)} />
+      <ActionPlanModal 
+        isOpen={showActionPlan}
+        onClose={() => setShowActionPlan(false)}
+        tickets={tickets}
+      />
     </div>
   );
 }
