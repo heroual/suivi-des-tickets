@@ -63,16 +63,49 @@ export async function updateTicket(id: string, data: Partial<Ticket>): Promise<v
     if (!auth.currentUser) throw new Error('User not authenticated');
 
     const ticketRef = doc(db, 'tickets', id);
-    const updateData = {
-      ...data,
-      dateCloture: data.dateCloture ? Timestamp.fromDate(data.dateCloture) : null,
-      dateCreation: data.dateCreation ? Timestamp.fromDate(data.dateCreation) : undefined,
+    const updateData: Record<string, any> = {
       updatedAt: Timestamp.now(),
       userId: auth.currentUser.uid
     };
+
+    // Handle date fields
+    if (data.dateCreation) {
+      updateData.dateCreation = Timestamp.fromDate(data.dateCreation);
+    }
+    if (data.dateCloture) {
+      updateData.dateCloture = Timestamp.fromDate(data.dateCloture);
+    }
+
+    // Add all other fields except dates which we handled above
+    Object.entries(data).forEach(([key, value]) => {
+      if (key !== 'dateCreation' && key !== 'dateCloture') {
+        updateData[key] = value;
+      }
+    });
+
     await updateDoc(ticketRef, updateData);
   } catch (error) {
     console.error('Error updating ticket:', error);
+    throw error;
+  }
+}
+
+export async function closeTicket(id: string): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const ticketRef = doc(db, 'tickets', id);
+    const updateData = {
+      status: 'CLOTURE',
+      dateCloture: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      userId: auth.currentUser.uid,
+      delaiRespect: true // You might want to calculate this based on business logic
+    };
+
+    await updateDoc(ticketRef, updateData);
+  } catch (error) {
+    console.error('Error closing ticket:', error);
     throw error;
   }
 }
@@ -147,7 +180,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
   }
 }
 
-// Device management functions
+// Device management functions remain the same...
 export async function addDevice(device: Omit<Device, 'id'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
