@@ -27,6 +27,7 @@ import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
 function App() {
+  const [showActionPlan, setShowActionPlan] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
