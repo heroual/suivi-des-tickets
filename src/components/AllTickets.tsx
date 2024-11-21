@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Filter, FileSpreadsheet, Download } from 'lucide-react';
-import TicketList from './TicketList';
-import type { Ticket, CauseType } from '../types';
+import { Filter, FileSpreadsheet, Download, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
+import type { Ticket, CauseType } from '../types';
 
 interface AllTicketsProps {
   tickets: Ticket[];
@@ -12,12 +11,31 @@ interface AllTicketsProps {
 
 export default function AllTickets({ tickets }: AllTicketsProps) {
   const [selectedCauseType, setSelectedCauseType] = useState<CauseType | 'ALL'>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const filteredTickets = useMemo(() => {
-    if (selectedCauseType === 'ALL') return tickets;
-    return tickets.filter(ticket => ticket.causeType === selectedCauseType);
-  }, [tickets, selectedCauseType]);
+    let filtered = [...tickets];
+
+    // Apply cause type filter
+    if (selectedCauseType !== 'ALL') {
+      filtered = filtered.filter(ticket => ticket.causeType === selectedCauseType);
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(ticket => 
+        ticket.ndLogin.toLowerCase().includes(search) ||
+        ticket.description.toLowerCase().includes(search) ||
+        ticket.cause.toLowerCase().includes(search) ||
+        ticket.motifCloture?.toLowerCase().includes(search)
+      );
+    }
+
+    // Sort by date, most recent first
+    return filtered.sort((a, b) => b.dateCreation.getTime() - a.dateCreation.getTime());
+  }, [tickets, selectedCauseType, searchTerm]);
 
   const stats = useMemo(() => ({
     total: filteredTickets.length,
@@ -45,7 +63,6 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
 
-    // Set column widths
     ws['!cols'] = [
       { wch: 20 }, // Date
       { wch: 15 }, // ND/Login
@@ -135,13 +152,110 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
             </div>
           </div>
         )}
+
+        {/* Search Bar */}
+        <div className="mt-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Rechercher un ticket..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <X className="h-5 w-5 text-gray-400 hover:text-gray-500" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Tickets List */}
-      <TicketList 
-        tickets={filteredTickets} 
-        showOnlyNew={false}
-      />
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ND/Login
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cause
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Technicien
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredTickets.map((ticket) => (
+                <tr key={ticket.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm', { locale: fr })}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {ticket.ndLogin}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {ticket.serviceType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                    {ticket.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      ticket.causeType === 'Technique' ? 'bg-green-100 text-green-800' :
+                      ticket.causeType === 'Casse' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {ticket.causeType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {ticket.technician}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      ticket.status === 'CLOTURE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {ticket.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {filteredTickets.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                    Aucun ticket trouvé
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
