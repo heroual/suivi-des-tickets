@@ -1,3 +1,5 @@
+import ActionPlanButton from './components/ActionPlanButton';
+import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon } from 'lucide-react';
 import { User } from 'firebase/auth';
@@ -44,6 +46,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [remainingTime, setRemainingTime] = useState(300);
+  const [showActionPlan, setShowActionPlan] = useState(false);
 
   useAutoSignout();
 
@@ -445,6 +448,13 @@ function App() {
                   tickets={tickets}
                   showOnlyNew={true}
                 />
+                <ActionPlanButton onClick={() => setShowActionPlan(true)} />
+  <ActionPlanModal 
+    isOpen={showActionPlan}
+    onClose={() => setShowActionPlan(false)}
+    tickets={tickets}
+  />
+</>
               </div>
             </div>
           </>
