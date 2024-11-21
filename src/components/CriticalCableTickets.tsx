@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, PlusCircle, X, Edit2, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, PlusCircle, X, Edit2, Trash2, Upload, Loader } from 'lucide-react';
 import type { Ticket, ServiceType, Technician } from '../types';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -26,6 +26,9 @@ export default function CriticalCableTickets({
 }: CriticalCableTicketsProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [deletingTicketId, setDeletingTicketId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
   const [newTicket, setNewTicket] = useState<NewCableTicket>({
     ndLogin: '',
     locality: '',
@@ -92,14 +95,24 @@ export default function CriticalCableTickets({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!onDeleteTicket) return;
+  const confirmDelete = (ticket: Ticket) => {
+    setTicketToDelete(ticket);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDelete = async () => {
+    if (!ticketToDelete || !onDeleteTicket) return;
 
     try {
-      await onDeleteTicket(id);
+      setDeletingTicketId(ticketToDelete.id);
+      await onDeleteTicket(ticketToDelete.id);
+      setShowDeleteConfirm(false);
+      setTicketToDelete(null);
     } catch (error) {
       console.error('Error deleting ticket:', error);
       alert('Erreur lors de la suppression du ticket. Veuillez réessayer.');
+    } finally {
+      setDeletingTicketId(null);
     }
   };
 
@@ -154,6 +167,48 @@ export default function CriticalCableTickets({
     }
 
     e.target.value = '';
+  };
+
+  const DeleteConfirmationModal = () => {
+    if (!showDeleteConfirm || !ticketToDelete) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirmer la suppression</h3>
+          <p className="text-gray-600 mb-6">
+            Êtes-vous sûr de vouloir supprimer le ticket pour {ticketToDelete.ndLogin} ?
+            Cette action est irréversible.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              disabled={deletingTicketId === ticketToDelete.id}
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 flex items-center"
+              disabled={deletingTicketId === ticketToDelete.id}
+            >
+              {deletingTicketId === ticketToDelete.id ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const TicketForm = () => (
@@ -276,14 +331,20 @@ export default function CriticalCableTickets({
                   <button
                     onClick={() => handleEdit(ticket)}
                     className="text-blue-600 hover:text-blue-800"
+                    disabled={deletingTicketId === ticket.id}
                   >
                     <Edit2 className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => handleDelete(ticket.id)}
+                    onClick={() => confirmDelete(ticket)}
                     className="text-red-600 hover:text-red-800"
+                    disabled={deletingTicketId === ticket.id}
                   >
-                    <Trash2 className="w-5 h-5" />
+                    {deletingTicketId === ticket.id ? (
+                      <Loader className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               )}
@@ -299,6 +360,7 @@ export default function CriticalCableTickets({
       </div>
 
       {showForm && <TicketForm />}
+      <DeleteConfirmationModal />
     </div>
   );
 }
