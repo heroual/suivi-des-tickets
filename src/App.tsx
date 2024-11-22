@@ -22,7 +22,7 @@ import Analytics from './components/Analytics';
 import DeviceManagement from './components/DeviceManagement';
 import AutoSignoutAlert from './components/AutoSignoutAlert';
 import ActionPlan from './components/ActionPlan';
-import { useAutoSignout } from './hooks/useAutoSignout';
+import YearlyTimeline from './components/YearlyTimeline';
 import type { Ticket, DailyStats } from './types';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
@@ -38,14 +38,13 @@ function App() {
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
+  const [showYearlyTimeline, setShowYearlyTimeline] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [remainingTime, setRemainingTime] = useState(300);
   const [showActionPlan, setShowActionPlan] = useState(false);
-
-  useAutoSignout();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -197,6 +196,7 @@ function App() {
             setShowAnalytics(false);
             setShowAllTickets(false);
             setShowDeviceManagement(false);
+            setShowYearlyTimeline(false);
           }}
           className="flex flex-col items-center p-2 text-xs text-gray-600"
         >
@@ -208,6 +208,7 @@ function App() {
             setShowAnalytics(true);
             setShowAllTickets(false);
             setShowDeviceManagement(false);
+            setShowYearlyTimeline(false);
           }}
           className="flex flex-col items-center p-2 text-xs text-gray-600"
         >
@@ -219,6 +220,7 @@ function App() {
             setShowAnalytics(false);
             setShowAllTickets(true);
             setShowDeviceManagement(false);
+            setShowYearlyTimeline(false);
           }}
           className="flex flex-col items-center p-2 text-xs text-gray-600"
         >
@@ -230,6 +232,7 @@ function App() {
             setShowAnalytics(false);
             setShowAllTickets(false);
             setShowDeviceManagement(true);
+            setShowYearlyTimeline(false);
           }}
           className="flex flex-col items-center p-2 text-xs text-gray-600"
         >
@@ -336,18 +339,20 @@ function App() {
                 onClick={() => {
                   setShowAnalytics(false);
                   setShowAllTickets(false);
-                  setShowDeviceManagement(!showDeviceManagement);
+                  setShowDeviceManagement(false);
+                  setShowYearlyTimeline(!showYearlyTimeline);
                 }}
                 className="btn-primary"
               >
-                <Router className="w-5 h-5 mr-2" />
-                {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
+                <Calendar className="w-5 h-5 mr-2" />
+                {showYearlyTimeline ? 'Tableau de bord' : 'Timeline Annuelle'}
               </button>
 
               <button
                 onClick={() => {
                   setShowDeviceManagement(false);
                   setShowAllTickets(false);
+                  setShowYearlyTimeline(false);
                   setShowAnalytics(!showAnalytics);
                 }}
                 className="btn-primary"
@@ -360,6 +365,7 @@ function App() {
                 onClick={() => {
                   setShowDeviceManagement(false);
                   setShowAnalytics(false);
+                  setShowYearlyTimeline(false);
                   setShowAllTickets(!showAllTickets);
                 }}
                 className="btn-primary"
@@ -401,6 +407,8 @@ function App() {
 
               <button
                 className="btn-secondary"
+                onClick={() => set Continuing the App.tsx file exactly where it left off:
+
                 onClick={() => setShowInfo(true)}
               >
                 <Info className="w-5 h-5" />
@@ -426,7 +434,9 @@ function App() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
-        {showAnalytics ? (
+        {showYearlyTimeline ? (
+          <YearlyTimeline tickets={tickets} />
+        ) : showAnalytics ? (
           <Analytics tickets={tickets} />
         ) : showAllTickets ? (
           <AllTickets tickets={tickets} />
