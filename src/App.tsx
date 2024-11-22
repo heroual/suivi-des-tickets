@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon } from 'lucide-react';
 import { User } from 'firebase/auth';
 import TicketForm from './components/TicketForm';
-import TicketList from './components/TicketList';
 import AllTickets from './components/AllTickets';
 import Dashboard from './components/Dashboard';
 import DailySummary from './components/DailySummary';
@@ -436,17 +435,9 @@ function App() {
             <div className="grid grid-cols-1 gap-6">
               <MonthlyStats tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <TicketForm onSubmit={handleNewTicket} />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <Dashboard dailyStats={dailyStats} />
-                    <CauseTypeChart tickets={tickets} />
-                  </div>
-                </div>
-                <TicketList 
-                  tickets={tickets}
-                  showOnlyNew={true}
-                />
+                <TicketForm onSubmit={handleNewTicket} />
+                <Dashboard dailyStats={dailyStats} />
+                <CauseTypeChart tickets={tickets} />
               </div>
             </div>
           </>
