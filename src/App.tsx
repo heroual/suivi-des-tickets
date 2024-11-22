@@ -314,105 +314,104 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-safe-bottom">
+      {/* Fixed Header */}
       <header className="bg-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="py-4 px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-4">
-                <div className="bg-blue-100 p-3 rounded-xl">
-                  <LayoutDashboard className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-                    STICKETS
-                  </h1>
-                  <p className="text-sm sm:text-lg text-gray-600 font-medium">
-                    Suivi des Tickets SAV TAROUDANT
-                  </p>
-                </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-100 p-3 rounded-xl">
+                <LayoutDashboard className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
               </div>
-              
-              <div className="hidden sm:flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => {
-                    setShowAnalytics(false);
-                    setShowAllTickets(false);
-                    setShowDeviceManagement(!showDeviceManagement);
-                  }}
-                  className="btn-primary"
-                >
-                  <Router className="w-5 h-5 mr-2" />
-                  {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowDeviceManagement(false);
-                    setShowAllTickets(false);
-                    setShowAnalytics(!showAnalytics);
-                  }}
-                  className="btn-primary"
-                >
-                  <BarChart2 className="w-5 h-5 mr-2" />
-                  {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowDeviceManagement(false);
-                    setShowAnalytics(false);
-                    setShowAllTickets(!showAllTickets);
-                  }}
-                  className="btn-primary"
-                >
-                  <History className="w-5 h-5 mr-2" />
-                  {showAllTickets ? 'Tableau de bord' : 'Historique'}
-                </button>
-
-                <button
-                  onClick={() => setShowExcelImport(true)}
-                  className="btn-primary"
-                >
-                  <FileSpreadsheet className="w-5 h-5 mr-2" />
-                  Importer Excel
-                </button>
-
-                <button
-                  onClick={handleLogout}
-                  className="btn-secondary"
-                >
-                  <LogOut className="w-5 h-5 mr-2" />
-                  Déconnexion
-                </button>
-
-                <button
-                  onClick={() => setShowDocumentation(true)}
-                  className="btn-secondary"
-                  title="Documentation"
-                >
-                  <BookOpen className="w-5 h-5" />
-                </button>
-
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowPKICalculator(true)}
-                >
-                  <Calculator className="w-5 h-5" />
-                </button>
-
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowInfo(true)}
-                >
-                  <Info className="w-5 h-5" />
-                </button>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                  STICKETS
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 font-medium">
+                  Suivi des Tickets SAV TAROUDANT
+                </p>
               </div>
+            </div>
+            
+            <div className="hidden sm:flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => {
+                  setShowAnalytics(false);
+                  setShowAllTickets(false);
+                  setShowDeviceManagement(!showDeviceManagement);
+                }}
+                className="btn-primary"
+              >
+                <Router className="w-5 h-5 mr-2" />
+                {showDeviceManagement ? 'Tableau de bord' : 'Équipements'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowDeviceManagement(false);
+                  setShowAllTickets(false);
+                  setShowAnalytics(!showAnalytics);
+                }}
+                className="btn-primary"
+              >
+                <BarChart2 className="w-5 h-5 mr-2" />
+                {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowDeviceManagement(false);
+                  setShowAnalytics(false);
+                  setShowAllTickets(!showAllTickets);
+                }}
+                className="btn-primary"
+              >
+                <History className="w-5 h-5 mr-2" />
+                {showAllTickets ? 'Tableau de bord' : 'Historique'}
+              </button>
+
+              <button
+                onClick={() => setShowExcelImport(true)}
+                className="btn-primary"
+              >
+                <FileSpreadsheet className="w-5 h-5 mr-2" />
+                Importer Excel
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="btn-secondary"
+              >
+                <LogOut className="w-5 h-5 mr-2" />
+                Déconnexion
+              </button>
+
+              <button
+                onClick={() => setShowDocumentation(true)}
+                className="btn-secondary"
+                title="Documentation"
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
+
+              <button
+                className="btn-secondary"
+                onClick={() => setShowPKICalculator(true)}
+              >
+                <Calculator className="w-5 h-5" />
+              </button>
+
+              <button
+                className="btn-secondary"
+                onClick={() => setShowInfo(true)}
+              >
+                <Info className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 mb-20 sm:mb-6">
+      <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
         {showAnalytics ? (
           <Analytics tickets={tickets} />
         ) : showAllTickets ? (
@@ -420,27 +419,29 @@ function App() {
         ) : showDeviceManagement ? (
           <DeviceManagement />
         ) : (
-          <>
+          <div className="space-y-8">
             <PKIDisplay stats={pki} />
             <MonthlyIndicators tickets={tickets} />
             <DailySummary tickets={tickets} />
-            <ActionPlan tickets={tickets} />
-            <CriticalCableTickets 
-              tickets={tickets}
-              onAddTicket={handleNewTicket}
-              onUpdateTicket={updateTicket}
-              onDeleteTicket={handleCloseTicket}
-            />
+            <div className="space-y-8">
+              <CriticalCableTickets 
+                tickets={tickets}
+                onAddTicket={handleNewTicket}
+                onUpdateTicket={updateTicket}
+                onDeleteTicket={handleCloseTicket}
+              />
+              <ActionPlan tickets={tickets} />
+            </div>
             
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-8">
               <MonthlyStats tickets={tickets} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <TicketForm onSubmit={handleNewTicket} />
                 <Dashboard dailyStats={dailyStats} />
                 <CauseTypeChart tickets={tickets} />
               </div>
             </div>
-          </>
+          </div>
         )}
       </main>
 
