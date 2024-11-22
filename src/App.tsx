@@ -1,7 +1,7 @@
 import ActionPlanButton from './components/ActionPlanButton';
 import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -188,132 +188,6 @@ function App() {
     );
   }
 
-  const MobileNav = () => (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-padding-bottom z-40 sm:hidden">
-      <div className="grid grid-cols-5 gap-1 p-2">
-        <button
-          onClick={() => {
-            setShowAnalytics(false);
-            setShowAllTickets(false);
-            setShowDeviceManagement(false);
-            setShowYearlyTimeline(false);
-          }}
-          className="flex flex-col items-center p-2 text-xs text-gray-600"
-        >
-          <LayoutDashboard className="w-6 h-6" />
-          <span>Accueil</span>
-        </button>
-        <button
-          onClick={() => {
-            setShowAnalytics(true);
-            setShowAllTickets(false);
-            setShowDeviceManagement(false);
-            setShowYearlyTimeline(false);
-          }}
-          className="flex flex-col items-center p-2 text-xs text-gray-600"
-        >
-          <BarChart2 className="w-6 h-6" />
-          <span>Stats</span>
-        </button>
-        <button
-          onClick={() => {
-            setShowAnalytics(false);
-            setShowAllTickets(true);
-            setShowDeviceManagement(false);
-            setShowYearlyTimeline(false);
-          }}
-          className="flex flex-col items-center p-2 text-xs text-gray-600"
-        >
-          <History className="w-6 h-6" />
-          <span>Tickets</span>
-        </button>
-        <button
-          onClick={() => {
-            setShowAnalytics(false);
-            setShowAllTickets(false);
-            setShowDeviceManagement(true);
-            setShowYearlyTimeline(false);
-          }}
-          className="flex flex-col items-center p-2 text-xs text-gray-600"
-        >
-          <Router className="w-6 h-6" />
-          <span>Équip.</span>
-        </button>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="flex flex-col items-center p-2 text-xs text-gray-600"
-        >
-          <Menu className="w-6 h-6" />
-          <span>Menu</span>
-        </button>
-      </div>
-    </nav>
-  );
-
-  const MobileMenu = () => (
-    <div className={`fixed inset-0 bg-gray-900 bg-opacity-50 z-50 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-      <div className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-xl transform transition-transform duration-300 ${mobileMenuOpen ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Menu</h3>
-            <button onClick={() => setMobileMenuOpen(false)}>
-              <CloseIcon className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                setShowExcelImport(true);
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
-            >
-              <FileSpreadsheet className="w-5 h-5 text-green-600" />
-              <span>Importer Excel</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowPKICalculator(true);
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
-            >
-              <Calculator className="w-5 h-5 text-blue-600" />
-              <span>Calculateur PKI</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowDocumentation(true);
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
-            >
-              <BookOpen className="w-5 h-5 text-purple-600" />
-              <span>Documentation</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowInfo(true);
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
-            >
-              <Info className="w-5 h-5 text-blue-600" />
-              <span>À propos</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Déconnexion</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-100 pb-safe-bottom">
       {/* Fixed Header */}
@@ -333,88 +207,143 @@ function App() {
                 </p>
               </div>
             </div>
-            
-            <div className="hidden sm:flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => {
-                  setShowAnalytics(false);
-                  setShowAllTickets(false);
-                  setShowDeviceManagement(false);
-                  setShowYearlyTimeline(!showYearlyTimeline);
-                }}
-                className="btn-primary"
-              >
-                <Calendar className="w-5 h-5 mr-2" />
-                {showYearlyTimeline ? 'Tableau de bord' : 'Timeline Annuelle'}
-              </button>
+          </div>
+        </div>
+      </header>
 
-              <button
-                onClick={() => {
-                  setShowDeviceManagement(false);
-                  setShowAllTickets(false);
-                  setShowYearlyTimeline(false);
-                  setShowAnalytics(!showAnalytics);
-                }}
-                className="btn-primary"
-              >
-                <BarChart2 className="w-5 h-5 mr-2" />
-                {showAnalytics ? 'Tableau de bord' : 'Analytiques'}
-              </button>
+      {/* Futuristic Navigation Bar */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-xl mb-6">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-between space-x-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => {
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                !showAnalytics && !showAllTickets && !showDeviceManagement && !showYearlyTimeline
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Zap className="w-5 h-5" />
+              <span>Dashboard</span>
+            </button>
 
-              <button
-                onClick={() => {
-                  setShowDeviceManagement(false);
-                  setShowAnalytics(false);
-                  setShowYearlyTimeline(false);
-                  setShowAllTickets(!showAllTickets);
-                }}
-                className="btn-primary"
-              >
-                <History className="w-5 h-5 mr-2" />
-                {showAllTickets ? 'Tableau de bord' : 'Historique'}
-              </button>
+            <button
+              onClick={() => {
+                setShowAnalytics(true);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showAnalytics
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <BarChart2 className="w-5 h-5" />
+              <span>Analytics</span>
+            </button>
 
+            <button
+              onClick={() => {
+                setShowAllTickets(true);
+                setShowAnalytics(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showAllTickets
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <History className="w-5 h-5" />
+              <span>Historique</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowDeviceManagement(true);
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showDeviceManagement
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Router className="w-5 h-5" />
+              <span>Équipements</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowYearlyTimeline(true);
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showYearlyTimeline
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Calendar className="w-5 h-5" />
+              <span>Timeline</span>
+            </button>
+
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowExcelImport(true)}
-                className="btn-primary"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
               >
-                <FileSpreadsheet className="w-5 h-5 mr-2" />
-                Importer Excel
+                <FileSpreadsheet className="w-5 h-5" />
+                <span>Import</span>
               </button>
 
               <button
-                onClick={handleLogout}
-                className="btn-secondary"
+                onClick={() => setShowPKICalculator(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
               >
-                <LogOut className="w-5 h-5 mr-2" />
-                Déconnexion
+                <Calculator className="w-5 h-5" />
+                <span>PKI</span>
               </button>
 
               <button
                 onClick={() => setShowDocumentation(true)}
-                className="btn-secondary"
-                title="Documentation"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
               >
                 <BookOpen className="w-5 h-5" />
+                <span>Docs</span>
               </button>
 
               <button
-                className="btn-secondary"
-                onClick={() => setShowPKICalculator(true)}
-              >
-                <Calculator className="w-5 h-5" />
-              </button>
-
-              <button
-                className="btn-secondary"
                 onClick={() => setShowInfo(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
               >
                 <Info className="w-5 h-5" />
+                <span>Info</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-red-500 transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Déconnexion</span>
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Date Display */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -465,9 +394,6 @@ function App() {
           </div>
         )}
       </main>
-
-      <MobileNav />
-      <MobileMenu />
 
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
       <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
