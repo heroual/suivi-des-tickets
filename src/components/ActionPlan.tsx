@@ -33,7 +33,8 @@ interface ActionPlanProps {
   tickets: Ticket[];
 }
 
-export default function ActionPlan({ tickets }: ActionPlanProps) {
+function ActionPlan({ tickets }: ActionPlanProps) {
+  // ... rest of the component implementation remains exactly the same ...
   const [plans, setPlans] = useState<ActionPlanType[]>([]);
   const [causes, setCauses] = useState<ActionCause[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,266 +163,6 @@ export default function ActionPlan({ tickets }: ActionPlanProps) {
     });
     setEditingCause(null);
   };
-
-  const PlanForm = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900">
-              {editingPlan ? 'Edit Action Plan' : 'New Action Plan'}
-            </h3>
-            <button onClick={() => setShowPlanForm(false)} className="text-gray-400 hover:text-gray-500">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <form onSubmit={handleAddPlan} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                value={planForm.title}
-                onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                value={planForm.description}
-                onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Term</label>
-                <select
-                  value={planForm.term}
-                  onChange={(e) => setPlanForm(prev => ({ ...prev, term: e.target.value as any }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="short">Short Term</option>
-                  <option value="medium">Medium Term</option>
-                  <option value="long">Long Term</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Priority</label>
-                <select
-                  value={planForm.priority}
-                  onChange={(e) => setPlanForm(prev => ({ ...prev, priority: e.target.value as any }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select
-                  value={planForm.status}
-                  onChange={(e) => setPlanForm(prev => ({ ...prev, status: e.target.value as any }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Progress (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={planForm.progress}
-                  onChange={(e) => setPlanForm(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
-              <input
-                type="text"
-                value={planForm.assignedTo}
-                onChange={(e) => setPlanForm(prev => ({ ...prev, assignedTo: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Due Date</label>
-              <input
-                type="date"
-                value={planForm.dueDate ? format(planForm.dueDate, 'yyyy-MM-dd') : ''}
-                onChange={(e) => setPlanForm(prev => ({ 
-                  ...prev, 
-                  dueDate: e.target.value ? new Date(e.target.value) : undefined 
-                }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowPlanForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                {editingPlan ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-
-  const CauseForm = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900">
-              {editingCause ? 'Edit Cause' : 'New Cause'}
-            </h3>
-            <button onClick={() => setShowCauseForm(false)} className="text-gray-400 hover:text-gray-500">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <form onSubmit={handleAddCause} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Type</label>
-              <select
-                value={causeForm.type}
-                onChange={(e) => setCauseForm(prev => ({ ...prev, type: e.target.value as any }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="Technique">Technical</option>
-                <option value="Client">Client</option>
-                <option value="Casse">Hardware</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                value={causeForm.description}
-                onChange={(e) => setCauseForm(prev => ({ ...prev, description: e.target.value }))}
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Frequency</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={causeForm.frequency}
-                  onChange={(e) => setCauseForm(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Impact</label>
-                <select
-                  value={causeForm.impact}
-                  onChange={(e) => setCauseForm(prev => ({ ...prev, impact: e.target.value as any }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Solutions</label>
-              {causeForm.solutions?.map((solution, index) => (
-                <div key={index} className="flex mb-2">
-                  <input
-                    type="text"
-                    value={solution}
-                    onChange={(e) => {
-                      const newSolutions = [...(causeForm.solutions || [])];
-                      newSolutions[index] = e.target.value;
-                      setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
-                    }}
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Solution"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newSolutions = causeForm.solutions?.filter((_, i) => i !== index);
-                      setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
-                    }}
-                    className="ml-2 text-red-600 hover:text-red-800"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCauseForm(prev => ({ 
-                  ...prev, 
-                  solutions: [...(prev.solutions || []), '']
-                }))}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-              >
-                + Add Solution
-              </button>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowCauseForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                {editingCause ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -559,8 +300,6 @@ export default function ActionPlan({ tickets }: ActionPlanProps) {
 
       {/* Causes */}
       <div className="mt-8">
-         Continuing the ActionPlan.tsx file content:
-
         <h3 className="text-xl font-bold text-gray-900 flex items-center mb-4">
           <Target className="w-6 h-6 text-blue-600 mr-2" />
           Root Causes Analysis
@@ -631,8 +370,265 @@ export default function ActionPlan({ tickets }: ActionPlanProps) {
         </div>
       </div>
 
-      {showPlanForm && <PlanForm />}
-      {showCauseForm && <CauseForm />}
+      {showPlanForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingPlan ? 'Edit Action Plan' : 'New Action Plan'}
+                </h3>
+                <button onClick={() => setShowPlanForm(false)} className="text-gray-400 hover:text-gray-500">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddPlan} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Title</label>
+                  <input
+                    type="text"
+                    value={planForm.title}
+                    onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    value={planForm.description}
+                    onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Term</label>
+                    <select
+                      value={planForm.term}
+                      onChange={(e) => setPlanForm(prev => ({ ...prev, term: e.target.value as any }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="short">Short Term</option>
+                      <option value="medium">Medium Term</option>
+                      <option value="long">Long Term</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Priority</label>
+                    <select
+                      value={planForm.priority}
+                      onChange={(e) => setPlanForm(prev => ({ ...prev, priority: e.target.value as any }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      value={planForm.status}
+                      onChange={(e) => setPlanForm(prev => ({ ...prev, status: e.target.value as any }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Progress (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={planForm.progress}
+                      onChange={(e) => setPlanForm(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+                  <input
+                    type="text"
+                    value={planForm.assignedTo}
+                    onChange={(e) => setPlanForm(prev => ({ ...prev, assignedTo: e.target.value }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Due Date</label>
+                  <input
+                    type="date"
+                    value={planForm.dueDate ? format(planForm.dueDate, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setPlanForm(prev => ({ 
+                      ...prev, 
+                      dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                    }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPlanForm(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    {editingPlan ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCauseForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingCause ? 'Edit Cause' : 'New Cause'}
+                </h3>
+                <button onClick={() => setShowCauseForm(false)} className="text-gray-400 hover:text-gray-500">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddCause} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Type</label>
+                  <select
+                    value={causeForm.type}
+                    onChange={(e) => setCauseForm(prev => ({ ...prev, type: e.target.value as any }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="Technique">Technical</option>
+                    <option value="Client">Client</option>
+                    <option value="Casse">Hardware</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    value={causeForm.description}
+                    onChange={(e) => setCauseForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Frequency</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={causeForm.frequency}
+                      onChange={(e) => setCauseForm(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Impact</label>
+                    <select
+                      value={causeForm.impact}
+                      onChange={(e) => setCauseForm(prev => ({ ...prev, impact: e.target.value as any }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Solutions</label>
+                  {causeForm.solutions?.map((solution, index) => (
+                    <div key={index} className="flex mb-2">
+                      <input
+                        type="text"
+                        value={solution}
+                        onChange={(e) => {
+                          const newSolutions = [...(causeForm.solutions || [])];
+                          newSolutions[index] = e.target.value;
+                          setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
+                        }}
+                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Solution"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSolutions = causeForm.solutions?.filter((_, i) => i !== index);
+                          setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
+                        }}
+                        className="ml-2 text-red-600 hover:text-red-800"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCauseForm(prev => ({ 
+                      ...prev, 
+                      solutions: [...(prev.solutions || []), '']
+                    }))}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    + Add Solution
+                  </button>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCauseForm(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    {editingCause ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
