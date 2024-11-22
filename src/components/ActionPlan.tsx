@@ -1,394 +1,640 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Lightbulb, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
   Target,
-  ArrowRight,
-  Calendar,
-  Activity,
-  MapPin,
-  Zap,
   Brain,
   Network,
-  Users
+  Plus,
+  Edit2,
+  Trash2,
+  Save,
+  X,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  User
 } from 'lucide-react';
-import { format, subDays, isWithinInterval } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { Ticket } from '../types';
+import type { ActionPlan as ActionPlanType, ActionCause, Ticket } from '../types';
+import { 
+  addActionPlan, 
+  updateActionPlan, 
+  deleteActionPlan, 
+  getActionPlans,
+  addActionCause,
+  updateActionCause,
+  deleteActionCause,
+  getActionCauses
+} from '../services/firebase';
 
 interface ActionPlanProps {
   tickets: Ticket[];
 }
 
-interface NetworkIssue {
-  id: string;
-  location: string;
-  description: string;
-  impact: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'in-progress' | 'resolved';
-  affectedCustomers: number;
-}
-
-interface Idea {
-  id: string;
-  title: string;
-  description: string;
-  impact: string;
-  effort: 'low' | 'medium' | 'high';
-  category: 'process' | 'technical' | 'customer';
-  status: 'proposed' | 'approved' | 'implemented';
-}
-
 export default function ActionPlan({ tickets }: ActionPlanProps) {
-  const [activeTab, setActiveTab] = useState<'actions' | 'network' | 'ideas'>('actions');
-  const [showCauses, setShowCauses] = useState(false);
+  const [plans, setPlans] = useState<ActionPlanType[]>([]);
+  const [causes, setCauses] = useState<ActionCause[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showPlanForm, setShowPlanForm] = useState(false);
+  const [showCauseForm, setShowCauseForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<ActionPlanType | null>(null);
+  const [editingCause, setEditingCause] = useState<ActionCause | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample network issues data
-  const networkIssues: NetworkIssue[] = [
-    {
-      id: '1',
-      location: 'Quartier Industriel',
-      description: 'Câble principal endommagé',
-      impact: 'Interruptions fréquentes du service',
-      priority: 'high',
-      status: 'in-progress',
-      affectedCustomers: 150
-    },
-    {
-      id: '2',
-      location: 'Zone Résidentielle Sud',
-      description: 'Point de distribution saturé',
-      impact: 'Dégradation de la qualité de service',
-      priority: 'medium',
-      status: 'pending',
-      affectedCustomers: 75
+  const [planForm, setPlanForm] = useState<Partial<ActionPlanType>>({
+    title: '',
+    description: '',
+    term: 'short',
+    status: 'pending',
+    priority: 'medium',
+    progress: 0,
+    assignedTo: ''
+  });
+
+  const [causeForm, setCauseForm] = useState<Partial<ActionCause>>({
+    type: 'Technique',
+    description: '',
+    frequency: 0,
+    impact: 'medium',
+    solutions: ['']
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [loadedPlans, loadedCauses] = await Promise.all([
+        getActionPlans(),
+        getActionCauses()
+      ]);
+      setPlans(loadedPlans);
+      setCauses(loadedCauses);
+      setError(null);
+    } catch (error) {
+      setError('Error loading data. Please try again.');
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  // Sample improvement ideas
-  const ideas: Idea[] = [
-    {
-      id: '1',
-      title: 'Système de notification automatique',
-      description: 'Mise en place d\'alertes SMS pour les clients lors des interventions',
-      impact: 'Amélioration de la satisfaction client',
-      effort: 'medium',
-      category: 'technical',
-      status: 'proposed'
-    },
-    {
-      id: '2',
-      title: 'Programme de maintenance préventive',
-      description: 'Inspection régulière des points critiques du réseau',
-      impact: 'Réduction des pannes de 30%',
-      effort: 'high',
-      category: 'process',
-      status: 'approved'
-    }
-  ];
-
-  const stats = {
-    totalTickets: tickets.length,
-    technicalIssues: tickets.filter(t => t.causeType === 'Technique').length,
-    cableIssues: tickets.filter(t => t.causeType === 'Casse').length,
-    clientIssues: tickets.filter(t => t.causeType === 'Client').length
   };
 
-  const TabButton = ({ tab, current, icon: Icon, label }: { 
-    tab: 'actions' | 'network' | 'ideas', 
-    current: string, 
-    icon: any, 
-    label: string 
-  }) => (
-    <button
-      onClick={() => setActiveTab(tab)}
-      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-        tab === current
-          ? 'bg-blue-100 text-blue-700'
-          : 'hover:bg-gray-100 text-gray-600'
-      }`}
-    >
-      <Icon className="w-5 h-5 mr-2" />
-      {label}
-    </button>
-  );
+  const handleAddPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingPlan) {
+        await updateActionPlan(editingPlan.id, planForm);
+      } else {
+        await addActionPlan(planForm as Omit<ActionPlanType, 'id' | 'createdAt' | 'updatedAt'>);
+      }
+      await loadData();
+      setShowPlanForm(false);
+      resetPlanForm();
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      setError('Error saving plan. Please try again.');
+    }
+  };
 
-  const NetworkIssueCard = ({ issue }: { issue: NetworkIssue }) => (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start">
-        <div>
-          <h4 className="font-semibold text-gray-900">{issue.location}</h4>
-          <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+  const handleDeletePlan = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this action plan?')) return;
+    try {
+      await deleteActionPlan(id);
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      setError('Error deleting plan. Please try again.');
+    }
+  };
+
+  const handleAddCause = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingCause) {
+        await updateActionCause(editingCause.id, causeForm);
+      } else {
+        await addActionCause(causeForm as Omit<ActionCause, 'id' | 'createdAt' | 'updatedAt'>);
+      }
+      await loadData();
+      setShowCauseForm(false);
+      resetCauseForm();
+    } catch (error) {
+      console.error('Error saving cause:', error);
+      setError('Error saving cause. Please try again.');
+    }
+  };
+
+  const handleDeleteCause = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this cause?')) return;
+    try {
+      await deleteActionCause(id);
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting cause:', error);
+      setError('Error deleting cause. Please try again.');
+    }
+  };
+
+  const resetPlanForm = () => {
+    setPlanForm({
+      title: '',
+      description: '',
+      term: 'short',
+      status: 'pending',
+      priority: 'medium',
+      progress: 0,
+      assignedTo: ''
+    });
+    setEditingPlan(null);
+  };
+
+  const resetCauseForm = () => {
+    setCauseForm({
+      type: 'Technique',
+      description: '',
+      frequency: 0,
+      impact: 'medium',
+      solutions: ['']
+    });
+    setEditingCause(null);
+  };
+
+  const PlanForm = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-gray-900">
+              {editingPlan ? 'Edit Action Plan' : 'New Action Plan'}
+            </h3>
+            <button onClick={() => setShowPlanForm(false)} className="text-gray-400 hover:text-gray-500">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleAddPlan} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                value={planForm.title}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                value={planForm.description}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Term</label>
+                <select
+                  value={planForm.term}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, term: e.target.value as any }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="short">Short Term</option>
+                  <option value="medium">Medium Term</option>
+                  <option value="long">Long Term</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Priority</label>
+                <select
+                  value={planForm.priority}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, priority: e.target.value as any }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={planForm.status}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, status: e.target.value as any }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Progress (%)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={planForm.progress}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+              <input
+                type="text"
+                value={planForm.assignedTo}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, assignedTo: e.target.value }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Due Date</label>
+              <input
+                type="date"
+                value={planForm.dueDate ? format(planForm.dueDate, 'yyyy-MM-dd') : ''}
+                onChange={(e) => setPlanForm(prev => ({ 
+                  ...prev, 
+                  dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowPlanForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {editingPlan ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          issue.priority === 'high' ? 'bg-red-100 text-red-800' :
-          issue.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {issue.priority === 'high' ? 'Priorité haute' :
-           issue.priority === 'medium' ? 'Priorité moyenne' :
-           'Priorité basse'}
-        </span>
-      </div>
-      <div className="mt-3 flex items-center text-sm text-gray-500">
-        <Users className="w-4 h-4 mr-1" />
-        {issue.affectedCustomers} clients affectés
-      </div>
-      <div className="mt-3 flex justify-between items-center">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          issue.status === 'pending' ? 'bg-gray-100 text-gray-800' :
-          issue.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {issue.status === 'pending' ? 'En attente' :
-           issue.status === 'in-progress' ? 'En cours' :
-           'Résolu'}
-        </span>
-        <p className="text-sm text-gray-500">{issue.impact}</p>
       </div>
     </div>
   );
 
-  const IdeaCard = ({ idea }: { idea: Idea }) => (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start">
-        <div>
-          <h4 className="font-semibold text-gray-900">{idea.title}</h4>
-          <p className="text-sm text-gray-600 mt-1">{idea.description}</p>
+  const CauseForm = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-gray-900">
+              {editingCause ? 'Edit Cause' : 'New Cause'}
+            </h3>
+            <button onClick={() => setShowCauseForm(false)} className="text-gray-400 hover:text-gray-500">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleAddCause} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <select
+                value={causeForm.type}
+                onChange={(e) => setCauseForm(prev => ({ ...prev, type: e.target.value as any }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="Technique">Technical</option>
+                <option value="Client">Client</option>
+                <option value="Casse">Hardware</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                value={causeForm.description}
+                onChange={(e) => setCauseForm(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Frequency</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={causeForm.frequency}
+                  onChange={(e) => setCauseForm(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Impact</label>
+                <select
+                  value={causeForm.impact}
+                  onChange={(e) => setCauseForm(prev => ({ ...prev, impact: e.target.value as any }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Solutions</label>
+              {causeForm.solutions?.map((solution, index) => (
+                <div key={index} className="flex mb-2">
+                  <input
+                    type="text"
+                    value={solution}
+                    onChange={(e) => {
+                      const newSolutions = [...(causeForm.solutions || [])];
+                      newSolutions[index] = e.target.value;
+                      setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
+                    }}
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Solution"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newSolutions = causeForm.solutions?.filter((_, i) => i !== index);
+                      setCauseForm(prev => ({ ...prev, solutions: newSolutions }));
+                    }}
+                    className="ml-2 text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCauseForm(prev => ({ 
+                  ...prev, 
+                  solutions: [...(prev.solutions || []), '']
+                }))}
+                className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Solution
+              </button>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowCauseForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {editingCause ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </form>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          idea.category === 'technical' ? 'bg-purple-100 text-purple-800' :
-          idea.category === 'process' ? 'bg-blue-100 text-blue-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {idea.category === 'technical' ? 'Technique' :
-           idea.category === 'process' ? 'Processus' :
-           'Client'}
-        </span>
-      </div>
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            idea.effort === 'low' ? 'bg-green-100 text-green-800' :
-            idea.effort === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            Effort: {
-              idea.effort === 'low' ? 'Faible' :
-              idea.effort === 'medium' ? 'Moyen' :
-              'Élevé'
-            }
-          </span>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            idea.status === 'proposed' ? 'bg-gray-100 text-gray-800' :
-            idea.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-            'bg-green-100 text-green-800'
-          }`}>
-            {idea.status === 'proposed' ? 'Proposé' :
-             idea.status === 'approved' ? 'Approuvé' :
-             'Implémenté'}
-          </span>
-        </div>
-        <p className="text-sm text-gray-500">{idea.impact}</p>
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
-        <div className="flex items-center space-x-3 mb-4">
-          <Brain className="w-8 h-8" />
-          <h2 className="text-2xl font-bold">Analyse et Améliorations</h2>
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <p className="ml-3 text-sm text-red-700">{error}</p>
+          </div>
         </div>
-        <p className="text-blue-100">
-          Suivi des actions d'amélioration et points critiques
-        </p>
+      )}
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center">
+          <Brain className="w-6 h-6 text-blue-600 mr-2" />
+          Action Plans
+        </h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowCauseForm(true)}
+            className="btn-secondary"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Cause
+          </button>
+          <button
+            onClick={() => setShowPlanForm(true)}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Plan
+          </button>
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex space-x-4 border-b border-gray-200 pb-2">
-        <TabButton 
-          tab="actions" 
-          current={activeTab} 
-          icon={Target} 
-          label="Plan d'Actions" 
-        />
-        <TabButton 
-          tab="network" 
-          current={activeTab} 
-          icon={Network} 
-          label="Points Noirs" 
-        />
-        <TabButton 
-          tab="ideas" 
-          current={activeTab} 
-          icon={Lightbulb} 
-          label="Idées" 
-        />
-      </div>
-
-      {/* Content */}
-      <div className="space-y-6">
-        {activeTab === 'actions' && (
-          <>
-            {/* Causes Analysis */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Analyse des Causes
-                </h3>
+      {/* Action Plans */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {plans.map(plan => (
+          <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-semibold text-gray-900">{plan.title}</h4>
+                <p className="text-sm text-gray-600 mt-1">{plan.description}</p>
+              </div>
+              <div className="flex space-x-2">
                 <button
-                  onClick={() => setShowCauses(!showCauses)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  onClick={() => {
+                    setEditingPlan(plan);
+                    setPlanForm(plan);
+                    setShowPlanForm(true);
+                  }}
+                  className="text-blue-600 hover:text-blue-800"
                 >
-                  {showCauses ? 'Masquer les détails' : 'Voir les détails'}
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeletePlan(plan.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-900 font-medium">Techniques</span>
-                    <span className="text-blue-600 font-bold">
-                      {((stats.technicalIssues / stats.totalTickets) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-900 mt-2">
-                    {stats.technicalIssues}
-                  </p>
-                  {showCauses && (
-                    <div className="mt-3 text-sm text-blue-800">
-                      <ul className="space-y-1">
-                        <li>• Configuration équipements</li>
-                        <li>• Problèmes de synchronisation</li>
-                        <li>• Interférences signal</li>
-                      </ul>
-                    </div>
-                  )}
-                </div>
+            </div>
 
-                <div className="bg-red-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-900 font-medium">Câbles</span>
-                    <span className="text-red-600 font-bold">
-                      {((stats.cableIssues / stats.totalTickets) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-red-900 mt-2">
-                    {stats.cableIssues}
-                  </p>
-                  {showCauses && (
-                    <div className="mt-3 text-sm text-red-800">
-                      <ul className="space-y-1">
-                        <li>• Coupures accidentelles</li>
-                        <li>• Usure naturelle</li>
-                        <li>• Vandalisme</li>
-                      </ul>
-                    </div>
-                  )}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">{plan.term} term</span>
                 </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  plan.priority === 'high' ? 'bg-red-100 text-red-800' :
+                  plan.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-green-100 text-green-800'
+                }`}>
+                  {plan.priority} priority
+                </span>
+              </div>
 
-                <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-yellow-900 font-medium">Clients</span>
-                    <span className="text-yellow-600 font-bold">
-                      {((stats.clientIssues / stats.totalTickets) * 100).toFixed(1)}%
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">{plan.assignedTo || 'Unassigned'}</span>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  plan.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  plan.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {plan.status}
+                </span>
+              </div>
+
+              {plan.dueDate && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">
+                    Due: {format(plan.dueDate, 'PP', { locale: fr })}
+                  </span>
+                </div>
+              )}
+
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold inline-block text-blue-600">
+                      Progress
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-yellow-900 mt-2">
-                    {stats.clientIssues}
-                  </p>
-                  {showCauses && (
-                    <div className="mt-3 text-sm text-yellow-800">
-                      <ul className="space-y-1">
-                        <li>• Mauvaise utilisation</li>
-                        <li>• Configuration incorrecte</li>
-                        <li>• Équipement défectueux</li>
-                      </ul>
-                    </div>
-                  )}
+                  <div className="text-right">
+                    <span className="text-xs font-semibold inline-block text-blue-600">
+                      {plan.progress}%
+                    </span>
+                  </div>
+                </div>
+                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                  <div
+                    style={{ width: `${plan.progress}%` }}
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+                  ></div>
                 </div>
               </div>
             </div>
-
-            {/* Propositions */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Propositions d'Amélioration
-              </h3>
-              <div className="space-y-4">
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h4 className="font-medium text-green-900">Court Terme (1-3 mois)</h4>
-                  <ul className="mt-2 space-y-2">
-                    <li className="flex items-start">
-                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-2" />
-                      <span className="text-green-800">Formation continue des techniciens sur les nouvelles technologies</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-2" />
-                      <span className="text-green-800">Mise en place d'un système de suivi en temps réel des interventions</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900">Moyen Terme (3-6 mois)</h4>
-                  <ul className="mt-2 space-y-2">
-                    <li className="flex items-start">
-                      <Target className="w-5 h-5 text-blue-600 mt-0.5 mr-2" />
-                      <span className="text-blue-800">Développement d'un programme de maintenance préventive</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Target className="w-5 h-5 text-blue-600 mt-0.5 mr-2" />
-                      <span className="text-blue-800">Optimisation des processus de gestion des tickets</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <h4 className="font-medium text-purple-900">Long Terme (6-12 mois)</h4>
-                  <ul className="mt-2 space-y-2">
-                    <li className="flex items-start">
-                      <Zap className="w-5 h-5 text-purple-600 mt-0.5 mr-2" />
-                      <span className="text-purple-800">Modernisation complète de l'infrastructure réseau</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Zap className="w-5 h-5 text-purple-600 mt-0.5 mr-2" />
-                      <span className="text-purple-800">Mise en place d'un système de détection précoce des pannes</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'network' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {networkIssues.map(issue => (
-                <NetworkIssueCard key={issue.id} issue={issue} />
-              ))}
-            </div>
           </div>
-        )}
-
-        {activeTab === 'ideas' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {ideas.map(idea => (
-                <IdeaCard key={idea.id} idea={idea} />
-              ))}
-            </div>
-          </div>
-        )}
+        ))}
       </div>
+
+      {/* Causes */}
+      <div className="mt-8">
+         Continuing the ActionPlan.tsx file content:
+
+        <h3 className="text-xl font-bold text-gray-900 flex items-center mb-4">
+          <Target className="w-6 h-6 text-blue-600 mr-2" />
+          Root Causes Analysis
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {causes.map(cause => (
+            <div key={cause.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    cause.type === 'Technique' ? 'bg-blue-100 text-blue-800' :
+                    cause.type === 'Client' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {cause.type}
+                  </span>
+                  <p className="text-sm text-gray-600 mt-2">{cause.description}</p>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setEditingCause(cause);
+                      setCauseForm(cause);
+                      setShowCauseForm(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCause(cause.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Frequency: {cause.frequency} occurrences</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    cause.impact === 'high' ? 'bg-red-100 text-red-800' :
+                    cause.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {cause.impact} impact
+                  </span>
+                </div>
+
+                {cause.solutions.length > 0 && (
+                  <div className="mt-3">
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Proposed Solutions:</h5>
+                    <ul className="space-y-1">
+                      {cause.solutions.map((solution, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex items-start">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          {solution}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {showPlanForm && <PlanForm />}
+      {showCauseForm && <CauseForm />}
     </div>
   );
 }
+
+export default ActionPlan;

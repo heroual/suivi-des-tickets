@@ -53,3 +53,27 @@ export interface Device {
   technician: Technician;
   dateInstalled: Date;
 }
+export interface ActionPlan {
+  id: string;
+  title: string;
+  description: string;
+  term: 'short' | 'medium' | 'long';
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  dueDate?: Date;
+  assignedTo?: string;
+  progress: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ActionCause {
+  id: string;
+  type: 'Technique' | 'Client' | 'Casse';
+  description: string;
+  frequency: number;
+  impact: 'low' | 'medium' | 'high';
+  solutions: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}

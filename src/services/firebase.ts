@@ -2,6 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import type { Ticket, Device } from '../types';
+import { ActionPlan, ActionCause } from '../types';
+import { nanoid } from 'nanoid';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBEon3bFk8y6I_oS1pYmLL5Ap3IxdIHvKI",
@@ -29,7 +31,8 @@ export async function loginUser(email: string, password: string): Promise<User> 
     throw error;
   }
 }
-
+export const actionPlansCollection = collection(db, 'actionPlans');
+export const actionCausesCollection = collection(db, 'actionCauses');
 export async function logoutUser(): Promise<void> {
   try {
     await signOut(auth);
@@ -38,7 +41,141 @@ export async function logoutUser(): Promise<void> {
     throw error;
   }
 }
+export async function addActionPlan(plan: Omit<ActionPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
 
+    const now = new Date();
+    const docRef = await addDoc(actionPlansCollection, {
+      ...plan,
+      createdAt: Timestamp.fromDate(now),
+      updatedAt: Timestamp.fromDate(now),
+      id: nanoid()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding action plan:', error);
+    throw error;
+  }
+}
+
+export async function updateActionPlan(id: string, data: Partial<ActionPlan>): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const planRef = doc(actionPlansCollection, id);
+    await updateDoc(planRef, {
+      ...data,
+      updatedAt: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error updating action plan:', error);
+    throw error;
+  }
+}
+
+export async function deleteActionPlan(id: string): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const planRef = doc(actionPlansCollection, id);
+    await deleteDoc(planRef);
+  } catch (error) {
+    console.error('Error deleting action plan:', error);
+    throw error;
+  }
+}
+
+export async function getActionPlans(): Promise<ActionPlan[]> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const q = query(actionPlansCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt.toDate(),
+        updatedAt: data.updatedAt.toDate(),
+        dueDate: data.dueDate ? data.dueDate.toDate() : undefined
+      } as ActionPlan;
+    });
+  } catch (error) {
+    console.error('Error getting action plans:', error);
+    throw error;
+  }
+}
+
+// Action Causes CRUD Operations
+export async function addActionCause(cause: Omit<ActionCause, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const now = new Date();
+    const docRef = await addDoc(actionCausesCollection, {
+      ...cause,
+      createdAt: Timestamp.fromDate(now),
+      updatedAt: Timestamp.fromDate(now),
+      id: nanoid()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding action cause:', error);
+    throw error;
+  }
+}
+
+export async function updateActionCause(id: string, data: Partial<ActionCause>): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const causeRef = doc(actionCausesCollection, id);
+    await updateDoc(causeRef, {
+      ...data,
+      updatedAt: Timestamp.now()
+    });
+  } catch (error) {
+    console.error('Error updating action cause:', error);
+    throw error;
+  }
+}
+
+export async function deleteActionCause(id: string): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const causeRef = doc(actionCausesCollection, id);
+    await deleteDoc(causeRef);
+  } catch (error) {
+    console.error('Error deleting action cause:', error);
+    throw error;
+  }
+}
+
+export async function getActionCauses(): Promise<ActionCause[]> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const q = query(actionCausesCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt.toDate(),
+        updatedAt: data.updatedAt.toDate()
+      } as ActionCause;
+    });
+  } catch (error) {
+    console.error('Error getting action causes:', error);
+    throw error;
+  }
+}
 export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
