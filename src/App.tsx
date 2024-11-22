@@ -407,8 +407,6 @@ function App() {
 
               <button
                 className="btn-secondary"
-                onClick={() => set Continuing the App.tsx file exactly where it left off:
-
                 onClick={() => setShowInfo(true)}
               >
                 <Info className="w-5 h-5" />
