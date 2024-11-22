@@ -1,12 +1,13 @@
 import ActionPlanButton from './components/ActionPlanButton';
 import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon } from 'lucide-react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar } from 'lucide-react';
 import { User } from 'firebase/auth';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import TicketForm from './components/TicketForm';
 import AllTickets from './components/AllTickets';
 import Dashboard from './components/Dashboard';
-import DailySummary from './components/DailySummary';
 import CauseTypeChart from './components/CauseTypeChart';
 import MonthlyStats from './components/MonthlyStats';
 import MonthlyIndicators from './components/MonthlyIndicators';
@@ -23,8 +24,6 @@ import AutoSignoutAlert from './components/AutoSignoutAlert';
 import ActionPlan from './components/ActionPlan';
 import { useAutoSignout } from './hooks/useAutoSignout';
 import type { Ticket, DailyStats } from './types';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
@@ -411,6 +410,21 @@ function App() {
         </div>
       </header>
 
+      {/* Date Display */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <Calendar className="w-6 h-6 text-blue-600 mr-3" />
+            <span className="text-lg font-medium text-gray-900">
+              {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
+            </span>
+          </div>
+          <div className="text-sm text-gray-500">
+            Semaine {format(new Date(), 'w', { locale: fr })}
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
         {showAnalytics ? (
           <Analytics tickets={tickets} />
@@ -422,7 +436,6 @@ function App() {
           <div className="space-y-8">
             <PKIDisplay stats={pki} />
             <MonthlyIndicators tickets={tickets} />
-            <DailySummary tickets={tickets} />
             <div className="space-y-8">
               <CriticalCableTickets 
                 tickets={tickets}
