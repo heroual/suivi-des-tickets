@@ -77,3 +77,35 @@ export interface ActionCause {
   createdAt: Date;
   updatedAt: Date;
 }
+export type ServiceType = 'FIBRE' | 'ADSL' | 'DEGROUPAGE' | 'FIXE';
+export type Technician = 'BRAHIM' | 'ABDERAHMAN' | 'AXE';
+export type CauseType = 'Technique' | 'Client' | 'Casse';
+
+export interface EmailConfig {
+  enabled: boolean;
+  recipients: string[];
+  schedule: 'daily' | 'weekly' | 'monthly';
+  sendTime: string; // HH:mm format
+  includeMetrics: boolean;
+  includeCriticalTickets: boolean;
+  includeFullReport: boolean;
+}
+
+export interface Ticket {
+  id: string;
+  ndLogin: string;
+  serviceType: ServiceType;
+  dateCreation: Date;
+  dateCloture?: Date;
+  description: string;
+  cause: string;
+  causeType: CauseType;
+  technician: Technician;
+  status: 'EN_COURS' | 'CLOTURE';
+  delaiRespect: boolean;
+  reopened: boolean;
+  reopenCount: number;
+  motifCloture?: string;
+  imported?: boolean;
+}
+

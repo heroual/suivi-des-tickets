@@ -385,3 +385,42 @@ export async function getDevices(): Promise<Device[]> {
     throw error;
   }
 }
+// ... existing imports ...
+import { EmailConfig } from '../types';
+
+// Add to existing Firebase configuration
+const emailConfigCollection = collection(db, 'emailConfig');
+
+export async function saveEmailConfig(config: EmailConfig): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    
+    const configRef = doc(emailConfigCollection, auth.currentUser.uid);
+    await setDoc(configRef, {
+      ...config,
+      updatedAt: Timestamp.now(),
+      userId: auth.currentUser.uid
+    });
+  } catch (error) {
+    console.error('Error saving email config:', error);
+    throw error;
+  }
+}
+
+export async function getEmailConfig(): Promise<EmailConfig | null> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    
+    const configRef = doc(emailConfigCollection, auth.currentUser.uid);
+    const configSnap = await getDoc(configRef);
+    
+    if (!configSnap.exists()) return null;
+    
+    return configSnap.data() as EmailConfig;
+  } catch (error) {
+    console.error('Error getting email config:', error);
+    throw error;
+  }
+}
+
+// ... rest of the existing Firebase services ...
