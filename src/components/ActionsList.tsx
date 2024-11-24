@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Target, Zap, Edit2, Trash2 } from 'lucide-react';
+import { CheckCircle, Target, Zap, Edit2, Trash2, X, Save } from 'lucide-react';
 import type { Ticket } from '../types';
 
 interface ActionsListProps {
@@ -7,156 +7,228 @@ interface ActionsListProps {
   isEditing: boolean;
 }
 
-export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
-  const [showCauses, setShowCauses] = useState(false);
+interface Proposition {
+  id: string;
+  term: 'short' | 'medium' | 'long';
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+}
 
-  const stats = {
-    totalTickets: tickets.length,
-    technicalIssues: tickets.filter(t => t.causeType === 'Technique').length,
-    cableIssues: tickets.filter(t => t.causeType === 'Casse').length,
-    clientIssues: tickets.filter(t => t.causeType === 'Client').length
+export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
+  const [propositions, setPropositions] = useState<Proposition[]>([
+    {
+      id: '1',
+      term: 'short',
+      title: 'Formation continue des techniciens',
+      description: 'Programme de formation mensuel sur les nouvelles technologies et procédures',
+      status: 'in-progress'
+    },
+    {
+      id: '2',
+      term: 'medium',
+      title: 'Programme de maintenance préventive',
+      description: 'Mise en place d\'un système de maintenance préventive pour réduire les pannes',
+      status: 'pending'
+    },
+    {
+      id: '3',
+      term: 'long',
+      title: 'Modernisation de l\'infrastructure',
+      description: 'Plan de modernisation complète de l\'infrastructure réseau',
+      status: 'pending'
+    }
+  ]);
+
+  const [editingProposition, setEditingProposition] = useState<Proposition | null>(null);
+
+  const handleEdit = (proposition: Proposition) => {
+    setEditingProposition(proposition);
+  };
+
+  const handleSave = (id: string, updates: Partial<Proposition>) => {
+    setPropositions(prev => prev.map(p => 
+      p.id === id ? { ...p, ...updates } : p
+    ));
+    setEditingProposition(null);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette proposition ?')) {
+      setPropositions(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const handleAdd = () => {
+    const newProposition: Proposition = {
+      id: Date.now().toString(),
+      term: 'short',
+      title: 'Nouvelle proposition',
+      description: 'Description de la nouvelle proposition',
+      status: 'pending'
+    };
+    setPropositions(prev => [...prev, newProposition]);
+    setEditingProposition(newProposition);
+  };
+
+  const getTermColor = (term: string) => {
+    switch (term) {
+      case 'short':
+        return 'bg-green-50 text-green-900';
+      case 'medium':
+        return 'bg-blue-50 text-blue-900';
+      case 'long':
+        return 'bg-purple-50 text-purple-900';
+      default:
+        return 'bg-gray-50 text-gray-900';
+    }
+  };
+
+  const getTermIcon = (term: string) => {
+    switch (term) {
+      case 'short':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'medium':
+        return <Target className="w-5 h-5 text-blue-600" />;
+      case 'long':
+        return <Zap className="w-5 h-5 text-purple-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Causes Analysis */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Analyse des Causes
-          </h3>
+      {isEditing && (
+        <div className="flex justify-end">
           <button
-            onClick={() => setShowCauses(!showCauses)}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            onClick={handleAdd}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
-            {showCauses ? 'Masquer les détails' : 'Voir les détails'}
+            <span>Ajouter une proposition</span>
           </button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-blue-900 font-medium">Techniques</span>
-              <span className="text-blue-600 font-bold">
-                {((stats.technicalIssues / stats.totalTickets) * 100).toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-blue-900 mt-2">
-              {stats.technicalIssues}
-            </p>
-            {showCauses && (
-              <div className="mt-3 text-sm text-blue-800">
-                <ul className="space-y-1">
-                  <li>• Configuration équipements</li>
-                  <li>• Problèmes de synchronisation</li>
-                  <li>• Interférences signal</li>
-                </ul>
-              </div>
-            )}
-          </div>
+      )}
 
-          <div className="bg-red-50 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-red-900 font-medium">Câbles</span>
-              <span className="text-red-600 font-bold">
-                {((stats.cableIssues / stats.totalTickets) * 100).toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-red-900 mt-2">
-              {stats.cableIssues}
-            </p>
-            {showCauses && (
-              <div className="mt-3 text-sm text-red-800">
-                <ul className="space-y-1">
-                  <li>• Coupures accidentelles</li>
-                  <li>• Usure naturelle</li>
-                  <li>• Vandalisme</li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-yellow-50 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-yellow-900 font-medium">Clients</span>
-              <span className="text-yellow-600 font-bold">
-                {((stats.clientIssues / stats.totalTickets) * 100).toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-yellow-900 mt-2">
-              {stats.clientIssues}
-            </p>
-            {showCauses && (
-              <div className="mt-3 text-sm text-yellow-800">
-                <ul className="space-y-1">
-                  <li>• Mauvaise utilisation</li>
-                  <li>• Configuration incorrecte</li>
-                  <li>• Équipement défectueux</li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Propositions */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Propositions d'Amélioration
-        </h3>
-        <div className="space-y-4">
-          {['Court', 'Moyen', 'Long'].map((term, index) => (
-            <div key={term} className={`${
-              index === 0 ? 'bg-green-50' :
-              index === 1 ? 'bg-blue-50' :
-              'bg-purple-50'
-            } rounded-lg p-4`}>
-              <div className="flex justify-between items-start">
-                <h4 className={`font-medium ${
-                  index === 0 ? 'text-green-900' :
-                  index === 1 ? 'text-blue-900' :
-                  'text-purple-900'
-                }`}>
-                  {term} Terme ({
-                    index === 0 ? '1-3' :
-                    index === 1 ? '3-6' :
-                    '6-12'
-                  } mois)
-                </h4>
-                {isEditing && (
-                  <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-800">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+      <div className="grid grid-cols-1 gap-6">
+        {propositions.map((proposition) => (
+          <div
+            key={proposition.id}
+            className={`${getTermColor(proposition.term)} rounded-lg p-6 shadow-sm`}
+          >
+            {editingProposition?.id === proposition.id ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Titre</label>
+                  <input
+                    type="text"
+                    value={editingProposition.title}
+                    onChange={(e) => setEditingProposition(prev => prev ? { ...prev, title: e.target.value } : prev)}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={editingProposition.description}
+                    onChange={(e) => setEditingProposition(prev => prev ? { ...prev, description: e.target.value } : prev)}
+                    rows={3}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Terme</label>
+                    <select
+                      value={editingProposition.term}
+                      onChange={(e) => setEditingProposition(prev => prev ? { ...prev, term: e.target.value as any } : prev)}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="short">Court terme</option>
+                      <option value="medium">Moyen terme</option>
+                      <option value="long">Long terme</option>
+                    </select>
                   </div>
-                )}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Statut</label>
+                    <select
+                      value={editingProposition.status}
+                      onChange={(e) => setEditingProposition(prev => prev ? { ...prev, status: e.target.value as any } : prev)}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="pending">En attente</option>
+                      <option value="in-progress">En cours</option>
+                      <option value="completed">Terminé</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => setEditingProposition(null)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleSave(proposition.id, editingProposition)}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <ul className="mt-2 space-y-2">
-                <li className="flex items-start">
-                  {index === 0 ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-2" />
-                  ) : index === 1 ? (
-                    <Target className="w-5 h-5 text-blue-600 mt-0.5 mr-2" />
-                  ) : (
-                    <Zap className="w-5 h-5 text-purple-600 mt-0.5 mr-2" />
+            ) : (
+              <div>
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center space-x-2">
+                    {getTermIcon(proposition.term)}
+                    <h3 className="text-lg font-semibold">{proposition.title}</h3>
+                  </div>
+                  {isEditing && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(proposition)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(proposition.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
-                  <span className={`${
-                    index === 0 ? 'text-green-800' :
-                    index === 1 ? 'text-blue-800' :
-                    'text-purple-800'
-                  }`}>
-                    {index === 0 ? 'Formation continue des techniciens' :
-                     index === 1 ? 'Programme de maintenance préventive' :
-                     'Modernisation de l\'infrastructure'}
+                </div>
+                <p className="mt-2 text-sm">{proposition.description}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(proposition.status)}`}>
+                    {proposition.status === 'completed' ? 'Terminé' :
+                     proposition.status === 'in-progress' ? 'En cours' :
+                     'En attente'}
                   </span>
-                </li>
-              </ul>
-            </div>
-          ))}
-        </div>
+                  <span className="text-sm">
+                    {proposition.term === 'short' ? 'Court terme (1-3 mois)' :
+                     proposition.term === 'medium' ? 'Moyen terme (3-6 mois)' :
+                     'Long terme (6-12 mois)'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
