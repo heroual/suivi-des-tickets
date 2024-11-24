@@ -232,7 +232,7 @@ export async function getDevices(): Promise<Device[]> {
   }
 }
 
-export async function addAction Plan(plan: Omit<ActionPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+export async function addActionPlan(plan: Omit<ActionPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
 
@@ -395,4 +395,6 @@ export async function getEmailConfig(): Promise<EmailConfig | null> {
     return configSnap.data() as EmailConfig;
   } catch (error) {
     console.error('Error getting email config:', error);
-    throw
+    throw error;
+  }
+}
