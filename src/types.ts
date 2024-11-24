@@ -17,7 +17,7 @@ export interface Ticket {
   reopened: boolean;
   reopenCount: number;
   motifCloture?: string;
-  imported?: boolean; // Track if ticket was imported
+  imported?: boolean;
 }
 
 export interface DailyStats {
@@ -39,7 +39,6 @@ export interface CauseStats {
   name: string;
   value: number;
 }
-// ... existing types remain the same ...
 
 export type DeviceType = 'FIBRE' | 'ADSL';
 
@@ -53,6 +52,7 @@ export interface Device {
   technician: Technician;
   dateInstalled: Date;
 }
+
 export interface ActionPlan {
   id: string;
   Titre: string;
@@ -77,9 +77,6 @@ export interface ActionCause {
   createdAt: Date;
   updatedAt: Date;
 }
-export type ServiceType = 'FIBRE' | 'ADSL' | 'DEGROUPAGE' | 'FIXE';
-export type Technician = 'BRAHIM' | 'ABDERAHMAN' | 'AXE';
-export type CauseType = 'Technique' | 'Client' | 'Casse';
 
 export interface EmailConfig {
   enabled: boolean;
@@ -90,22 +87,3 @@ export interface EmailConfig {
   includeCriticalTickets: boolean;
   includeFullReport: boolean;
 }
-
-export interface Ticket {
-  id: string;
-  ndLogin: string;
-  serviceType: ServiceType;
-  dateCreation: Date;
-  dateCloture?: Date;
-  description: string;
-  cause: string;
-  causeType: CauseType;
-  technician: Technician;
-  status: 'EN_COURS' | 'CLOTURE';
-  delaiRespect: boolean;
-  reopened: boolean;
-  reopenCount: number;
-  motifCloture?: string;
-  imported?: boolean;
-}
-
