@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import ActionPlanContent from './ActionPlanContent';
+import type { Ticket } from '../types';
 
 interface ActionPlanModalProps {
   isOpen: boolean;
