@@ -1,7 +1,21 @@
-import ActionPlanButton from './components/ActionPlanButton';
-import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Info, 
+  Calculator, 
+  LogIn, 
+  LogOut, 
+  FileSpreadsheet, 
+  History, 
+  BookOpen, 
+  BarChart2, 
+  Router, 
+  Menu, 
+  X as CloseIcon, 
+  Calendar,
+  Zap,
+  Settings
+} from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +38,7 @@ import AutoSignoutAlert from './components/AutoSignoutAlert';
 import ActionPlan from './components/ActionPlan';
 import YearlyTimeline from './components/YearlyTimeline';
 import ThemeToggle from './components/ThemeToggle';
+import EmailConfig from './components/EmailConfig';
 import type { Ticket, DailyStats } from './types';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
@@ -40,6 +55,7 @@ function App() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
   const [showYearlyTimeline, setShowYearlyTimeline] = useState(false);
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -212,7 +228,7 @@ function App() {
         </div>
       </header>
 
-      {/* Futuristic Navigation Bar */}
+      {/* Navigation Bar */}
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 shadow-xl mb-6 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center justify-between space-x-2 overflow-x-auto scrollbar-hide">
@@ -319,6 +335,14 @@ function App() {
               </button>
 
               <button
+                onClick={() => setShowEmailConfig(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+              >
+                <Settings className="w-5 h-5" />
+                <span>Config Email</span>
+              </button>
+
+              <button
                 onClick={() => setShowDocumentation(true)}
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
               >
@@ -408,13 +432,11 @@ function App() {
         onClose={() => setShowDocumentation(false)} 
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
-      <ActionPlanButton onClick={() => setShowActionPlan(true)} />
-      <ActionPlanModal 
-        isOpen={showActionPlan}
-        onClose={() => setShowActionPlan(false)}
-        tickets={tickets}
+      <EmailConfig 
+        isOpen={showEmailConfig} 
+        onClose={() => setShowEmailConfig(false)} 
       />
+      {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
       <ThemeToggle />
     </div>
   );
