@@ -10,7 +10,7 @@ export default function DeviceManagement() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDurée, setSearchDurée] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -128,7 +128,7 @@ export default function DeviceManagement() {
   };
 
   const filteredDevices = devices.filter(device => {
-    const searchStr = searchTerm.toLowerCase();
+    const searchStr = searchDurée.toLowerCase();
     return (
       device.ndLogin.toLowerCase().includes(searchStr) ||
       device.reclamationNumber.toLowerCase().includes(searchStr) ||
@@ -297,8 +297,8 @@ export default function DeviceManagement() {
               <input
                 type="text"
                 placeholder="Rechercher un équipement..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchDurée}
+                onChange={(e) => setSearchDurée(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

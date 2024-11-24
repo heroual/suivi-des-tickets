@@ -55,9 +55,9 @@ export interface Device {
 }
 export interface ActionPlan {
   id: string;
-  title: string;
+  Titre: string;
   description: string;
-  term: 'short' | 'medium' | 'long';
+  Durée: 'short' | 'medium' | 'long';
   status: 'pending' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   dueDate?: Date;

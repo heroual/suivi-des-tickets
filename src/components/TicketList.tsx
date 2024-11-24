@@ -11,7 +11,7 @@ interface TicketListProps {
 }
 
 export default function TicketList({ tickets, showOnlyNew = false, onCloseTicket }: TicketListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDurée, setSearchDurée] = useState('');
   const [closingTicketId, setClosingTicketId] = useState<string | null>(null);
 
   const handleCloseTicket = async (id: string) => {
@@ -43,7 +43,7 @@ export default function TicketList({ tickets, showOnlyNew = false, onCloseTicket
     const isNew = new Date(ticket.dateCreation).toDateString() === new Date().toDateString();
     if (showOnlyNew && !isNew) return false;
 
-    const search = searchTerm.toLowerCase();
+    const search = searchDurée.toLowerCase();
     return (
       ticket.ndLogin.toLowerCase().includes(search) ||
       ticket.description.toLowerCase().includes(search) ||
@@ -64,13 +64,13 @@ export default function TicketList({ tickets, showOnlyNew = false, onCloseTicket
               type="text"
               placeholder="Rechercher..."
               className="w-full pl-10 pr-4 py-2 border rounded-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchDurée}
+              onChange={(e) => setSearchDurée(e.target.value)}
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            {searchTerm && (
+            {searchDurée && (
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchDurée('')}
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
@@ -142,7 +142,7 @@ export default function TicketList({ tickets, showOnlyNew = false, onCloseTicket
 
           {filteredTickets.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              {searchTerm ? 'Aucun ticket ne correspond à votre recherche' : 'Aucun ticket disponible'}
+              {searchDurée ? 'Aucun ticket ne correspond à votre recherche' : 'Aucun ticket disponible'}
             </div>
           )}
         </div>

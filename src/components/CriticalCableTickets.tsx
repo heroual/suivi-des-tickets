@@ -160,7 +160,7 @@ export default function CriticalCableTickets({
         }));
       }
 
-      alert('Import terminé avec succès');
+      alert('Import Duréeiné avec succès');
     } catch (error) {
       console.error('Import error:', error);
       alert('Erreur lors de l\'importation. Vérifiez le format du fichier.');

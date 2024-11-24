@@ -9,8 +9,8 @@ interface ActionsListProps {
 
 interface Proposition {
   id: string;
-  term: 'short' | 'medium' | 'long';
-  title: string;
+  Durée: 'short' | 'medium' | 'long';
+  Titre: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
 }
@@ -19,22 +19,22 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
   const [propositions, setPropositions] = useState<Proposition[]>([
     {
       id: '1',
-      term: 'short',
-      title: 'Formation continue des techniciens',
+      Durée: 'short',
+      Titre: 'Formation continue des techniciens',
       description: 'Programme de formation mensuel sur les nouvelles technologies et procédures',
       status: 'in-progress'
     },
     {
       id: '2',
-      term: 'medium',
-      title: 'Programme de maintenance préventive',
+      Durée: 'medium',
+      Titre: 'Programme de maintenance préventive',
       description: 'Mise en place d\'un système de maintenance préventive pour réduire les pannes',
       status: 'pending'
     },
     {
       id: '3',
-      term: 'long',
-      title: 'Modernisation de l\'infrastructure',
+      Durée: 'long',
+      Titre: 'Modernisation de l\'infrastructure',
       description: 'Plan de modernisation complète de l\'infrastructure réseau',
       status: 'pending'
     }
@@ -62,8 +62,8 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
   const handleAdd = () => {
     const newProposition: Proposition = {
       id: Date.now().toString(),
-      term: 'short',
-      title: 'Nouvelle proposition',
+      Durée: 'short',
+      Titre: 'Nouvelle proposition',
       description: 'Description de la nouvelle proposition',
       status: 'pending'
     };
@@ -71,8 +71,8 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
     setEditingProposition(newProposition);
   };
 
-  const getTermColor = (term: string) => {
-    switch (term) {
+  const getDuréeColor = (Durée: string) => {
+    switch (Durée) {
       case 'short':
         return 'bg-green-50 text-green-900';
       case 'medium':
@@ -84,8 +84,8 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
     }
   };
 
-  const getTermIcon = (term: string) => {
-    switch (term) {
+  const getDuréeIcon = (Durée: string) => {
+    switch (Durée) {
       case 'short':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'medium':
@@ -125,7 +125,7 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
         {propositions.map((proposition) => (
           <div
             key={proposition.id}
-            className={`${getTermColor(proposition.term)} rounded-lg p-6 shadow-sm`}
+            className={`${getDuréeColor(proposition.Durée)} rounded-lg p-6 shadow-sm`}
           >
             {editingProposition?.id === proposition.id ? (
               <div className="space-y-4">
@@ -133,8 +133,8 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
                   <label className="block text-sm font-medium mb-1">Titre</label>
                   <input
                     type="text"
-                    value={editingProposition.title}
-                    onChange={(e) => setEditingProposition(prev => prev ? { ...prev, title: e.target.value } : prev)}
+                    value={editingProposition.Titre}
+                    onChange={(e) => setEditingProposition(prev => prev ? { ...prev, Titre: e.target.value } : prev)}
                     className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -149,15 +149,15 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Terme</label>
+                    <label className="block text-sm font-medium mb-1">Duréee</label>
                     <select
-                      value={editingProposition.term}
-                      onChange={(e) => setEditingProposition(prev => prev ? { ...prev, term: e.target.value as any } : prev)}
+                      value={editingProposition.Durée}
+                      onChange={(e) => setEditingProposition(prev => prev ? { ...prev, Durée: e.target.value as any } : prev)}
                       className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="short">Court terme</option>
-                      <option value="medium">Moyen terme</option>
-                      <option value="long">Long terme</option>
+                      <option value="short">Court Duréee</option>
+                      <option value="medium">Moyen Duréee</option>
+                      <option value="long">Long Duréee</option>
                     </select>
                   </div>
                   <div>
@@ -169,7 +169,7 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
                     >
                       <option value="pending">En attente</option>
                       <option value="in-progress">En cours</option>
-                      <option value="completed">Terminé</option>
+                      <option value="completed">Duréeiné</option>
                     </select>
                   </div>
                 </div>
@@ -192,8 +192,8 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
               <div>
                 <div className="flex justify-between items-start">
                   <div className="flex items-center space-x-2">
-                    {getTermIcon(proposition.term)}
-                    <h3 className="text-lg font-semibold">{proposition.title}</h3>
+                    {getDuréeIcon(proposition.Durée)}
+                    <h3 className="text-lg font-semibold">{proposition.Titre}</h3>
                   </div>
                   {isEditing && (
                     <div className="flex space-x-2">
@@ -215,14 +215,14 @@ export default function ActionsList({ tickets, isEditing }: ActionsListProps) {
                 <p className="mt-2 text-sm">{proposition.description}</p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(proposition.status)}`}>
-                    {proposition.status === 'completed' ? 'Terminé' :
+                    {proposition.status === 'completed' ? 'Duréeiné' :
                      proposition.status === 'in-progress' ? 'En cours' :
                      'En attente'}
                   </span>
                   <span className="text-sm">
-                    {proposition.term === 'short' ? 'Court terme (1-3 mois)' :
-                     proposition.term === 'medium' ? 'Moyen terme (3-6 mois)' :
-                     'Long terme (6-12 mois)'}
+                    {proposition.Durée === 'short' ? 'Court Duréee (1-3 mois)' :
+                     proposition.Durée === 'medium' ? 'Moyen Duréee (3-6 mois)' :
+                     'Long Duréee (6-12 mois)'}
                   </span>
                 </div>
               </div>

@@ -11,7 +11,7 @@ interface AllTicketsProps {
 
 export default function AllTickets({ tickets }: AllTicketsProps) {
   const [selectedCauseType, setSelectedCauseType] = useState<CauseType | 'ALL'>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDurée, setSearchDurée] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const filteredTickets = useMemo(() => {
@@ -23,8 +23,8 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
     }
 
     // Apply search filter
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
+    if (searchDurée) {
+      const search = searchDurée.toLowerCase();
       filtered = filtered.filter(ticket => 
         ticket.ndLogin.toLowerCase().includes(search) ||
         ticket.description.toLowerCase().includes(search) ||
@@ -35,7 +35,7 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
 
     // Sort by date, most recent first
     return filtered.sort((a, b) => b.dateCreation.getTime() - a.dateCreation.getTime());
-  }, [tickets, selectedCauseType, searchTerm]);
+  }, [tickets, selectedCauseType, searchDurée]);
 
   const stats = useMemo(() => ({
     total: filteredTickets.length,
@@ -159,16 +159,16 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
             <input
               type="text"
               placeholder="Rechercher un ticket..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchDurée}
+              onChange={(e) => setSearchDurée(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
-            {searchTerm && (
+            {searchDurée && (
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchDurée('')}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
                 <X className="h-5 w-5 text-gray-400 hover:text-gray-500" />

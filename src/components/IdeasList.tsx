@@ -3,7 +3,7 @@ import { Edit2, Trash2, PlusCircle, X, Save, Lightbulb } from 'lucide-react';
 
 interface Idea {
   id: string;
-  title: string;
+  Titre: string;
   description: string;
   impact: string;
   effort: 'low' | 'medium' | 'high';
@@ -19,7 +19,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
   const [ideas, setIdeas] = useState<Idea[]>([
     {
       id: '1',
-      title: 'Système de notification automatique',
+      Titre: 'Système de notification automatique',
       description: 'Mise en place d\'alertes SMS pour les clients lors des interventions',
       impact: 'Amélioration de la satisfaction client',
       effort: 'medium',
@@ -28,7 +28,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
     },
     {
       id: '2',
-      title: 'Programme de maintenance préventive',
+      Titre: 'Programme de maintenance préventive',
       description: 'Inspection régulière des points critiques du réseau',
       impact: 'Réduction des pannes de 30%',
       effort: 'high',
@@ -40,7 +40,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
   const [formData, setFormData] = useState<Partial<Idea>>({
-    title: '',
+    Titre: '',
     description: '',
     impact: '',
     effort: 'medium',
@@ -69,7 +69,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
     } else {
       const newIdea: Idea = {
         id: Date.now().toString(),
-        title: formData.title || '',
+        Titre: formData.Titre || '',
         description: formData.description || '',
         impact: formData.impact || '',
         effort: formData.effort || 'medium',
@@ -83,7 +83,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
 
   const resetForm = () => {
     setFormData({
-      title: '',
+      Titre: '',
       description: '',
       impact: '',
       effort: 'medium',
@@ -115,7 +115,7 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
               <div>
                 <div className="flex items-center space-x-2">
                   <Lightbulb className="w-5 h-5 text-yellow-500" />
-                  <h4 className="font-semibold text-gray-900">{idea.title}</h4>
+                  <h4 className="font-semibold text-gray-900">{idea.Titre}</h4>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">{idea.description}</p>
               </div>
@@ -183,8 +183,8 @@ export default function IdeasList({ isEditing }: IdeasListProps) {
                   <label className="block text-sm font-medium text-gray-700">Titre</label>
                   <input
                     type="text"
-                    value={formData.title || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    value={formData.Titre || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, Titre: e.target.value }))}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />

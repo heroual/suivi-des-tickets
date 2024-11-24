@@ -164,7 +164,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"FIBRE,ADSL,DEGROUPAGE,FIXE"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitle: 'Erreur'
+        errorTitre: 'Erreur'
       },
       E2: {
         type: 'list',
@@ -172,7 +172,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"Technique,Client,Casse"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitle: 'Erreur'
+        errorTitre: 'Erreur'
       },
       F2: {
         type: 'list',
@@ -180,7 +180,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"BRAHIM,ABDERAHMAN,AXE"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitle: 'Erreur'
+        errorTitre: 'Erreur'
       },
       K2: {
         type: 'list',
@@ -188,7 +188,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"true,false"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitle: 'Erreur'
+        errorTitre: 'Erreur'
       }
     };
 

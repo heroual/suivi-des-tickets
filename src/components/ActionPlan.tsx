@@ -45,9 +45,9 @@ function ActionPlan({ tickets }: ActionPlanProps) {
   const [error, setError] = useState<string | null>(null);
 
   const [planForm, setPlanForm] = useState<Partial<ActionPlanType>>({
-    title: '',
+    Titre: '',
     description: '',
-    term: 'short',
+    Durée: 'short',
     status: 'pending',
     priority: 'medium',
     progress: 0,
@@ -142,9 +142,9 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
   const resetPlanForm = () => {
     setPlanForm({
-      title: '',
+      Titre: '',
       description: '',
-      term: 'short',
+      Durée: 'short',
       status: 'pending',
       priority: 'medium',
       progress: 0,
@@ -212,7 +212,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
           <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
             <div className="flex justify-between items-start">
               <div>
-                <h4 className="font-semibold text-gray-900">{plan.title}</h4>
+                <h4 className="font-semibold text-gray-900">{plan.Titre}</h4>
                 <p className="text-sm text-gray-600 mt-1">{plan.description}</p>
               </div>
               <div className="flex space-x-2">
@@ -239,15 +239,14 @@ function ActionPlan({ tickets }: ActionPlanProps) {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">{plan.term} term</span>
+                  <span className="text-gray-600">{plan.Durée} Durée</span>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   plan.priority === 'high' ? 'bg-red-100 text-red-800' :
                   plan.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-green-100 text-green-800'
                 }`}>
-                  {plan.priority} priority
-                </span>
+                  {plan.priority} Priorité                </span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
@@ -385,11 +384,11 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
               <form onSubmit={handleAddPlan} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
+                  <label className="block text-sm font-medium text-gray-700">Titre</label>
                   <input
                     type="text"
-                    value={planForm.title}
-                    onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
+                    value={planForm.Titre}
+                    onChange={(e) => setPlanForm(prev => ({ ...prev, Titre: e.target.value }))}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
@@ -408,15 +407,15 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Term</label>
+                    <label className="block text-sm font-medium text-gray-700">Durée</label>
                     <select
-                      value={planForm.term}
-                      onChange={(e) => setPlanForm(prev => ({ ...prev, term: e.target.value as any }))}
+                      value={planForm.Durée}
+                      onChange={(e) => setPlanForm(prev => ({ ...prev, Durée: e.target.value as any }))}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="short">Short Term</option>
-                      <option value="medium">Medium Term</option>
-                      <option value="long">Long Term</option>
+                      <option value="short">Court Terme</option>
+                      <option value="medium">Moyen Terme</option>
+                      <option value="long">Long Terme</option>
                     </select>
                   </div>
 
