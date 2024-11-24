@@ -34,7 +34,6 @@ interface ActionPlanProps {
 }
 
 function ActionPlan({ tickets }: ActionPlanProps) {
-  // ... rest of the component implementation remains exactly the same ...
   const [plans, setPlans] = useState<ActionPlanType[]>([]);
   const [causes, setCauses] = useState<ActionCause[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +76,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       setCauses(loadedCauses);
       setError(null);
     } catch (error) {
-      setError('Error loading data. Please try again.');
+      setError('Erreur lors du chargement des données. Veuillez réessayer.');
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
@@ -97,18 +96,18 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       resetPlanForm();
     } catch (error) {
       console.error('Error saving plan:', error);
-      setError('Error saving plan. Please try again.');
+      setError('Erreur lors de l\'enregistrement du plan. Veuillez réessayer.');
     }
   };
 
   const handleDeletePlan = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this action plan?')) return;
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?')) return;
     try {
       await deleteActionPlan(id);
       await loadData();
     } catch (error) {
       console.error('Error deleting plan:', error);
-      setError('Error deleting plan. Please try again.');
+      setError('Erreur lors de la suppression du plan. Veuillez réessayer.');
     }
   };
 
@@ -125,18 +124,18 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       resetCauseForm();
     } catch (error) {
       console.error('Error saving cause:', error);
-      setError('Error saving cause. Please try again.');
+      setError('Erreur lors de l\'enregistrement de la cause. Veuillez réessayer.');
     }
   };
 
   const handleDeleteCause = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this cause?')) return;
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette cause ?')) return;
     try {
       await deleteActionCause(id);
       await loadData();
     } catch (error) {
       console.error('Error deleting cause:', error);
-      setError('Error deleting cause. Please try again.');
+      setError('Erreur lors de la suppression de la cause. Veuillez réessayer.');
     }
   };
 
@@ -186,7 +185,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <Brain className="w-6 h-6 text-blue-600 mr-2" />
-          Action Plans
+          Plans d'Action
         </h2>
         <div className="flex space-x-2">
           <button
@@ -206,7 +205,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
         </div>
       </div>
 
-      {/* Action Plans */}
+      {/* Plans d'Action */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {plans.map(plan => (
           <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
@@ -239,27 +238,36 @@ function ActionPlan({ tickets }: ActionPlanProps) {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">{plan.Durée} Durée</span>
+                  <span className="text-gray-600">
+                    {plan.Durée === 'short' ? 'Court terme' :
+                     plan.Durée === 'medium' ? 'Moyen terme' :
+                     'Long terme'}
+                  </span>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   plan.priority === 'high' ? 'bg-red-100 text-red-800' :
                   plan.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-green-100 text-green-800'
                 }`}>
-                  {plan.priority} Priorité                </span>
+                  {plan.priority === 'high' ? 'Priorité haute' :
+                   plan.priority === 'medium' ? 'Priorité moyenne' :
+                   'Priorité basse'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <User className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">{plan.assignedTo || 'Unassigned'}</span>
+                  <span className="text-gray-600">{plan.assignedTo || 'Non assigné'}</span>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   plan.status === 'completed' ? 'bg-green-100 text-green-800' :
                   plan.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {plan.status}
+                  {plan.status === 'completed' ? 'Terminé' :
+                   plan.status === 'in-progress' ? 'En cours' :
+                   'En attente'}
                 </span>
               </div>
 
@@ -267,7 +275,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                 <div className="flex items-center space-x-2 text-sm">
                   <Calendar className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-600">
-                    Due: {format(plan.dueDate, 'PP', { locale: fr })}
+                    Échéance: {format(plan.dueDate, 'PP', { locale: fr })}
                   </span>
                 </div>
               )}
@@ -276,7 +284,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                 <div className="flex mb-2 items-center justify-between">
                   <div>
                     <span className="text-xs font-semibold inline-block text-blue-600">
-                      Progress
+                      Progression
                     </span>
                   </div>
                   <div className="text-right">
@@ -301,7 +309,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       <div className="mt-8">
         <h3 className="text-xl font-bold text-gray-900 flex items-center mb-4">
           <Target className="w-6 h-6 text-blue-600 mr-2" />
-          Analyse des Causes Racines
+          Analyse des Causes
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -340,19 +348,21 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
               <div className="mt-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Frequency: {cause.frequency} occurrences</span>
+                  <span className="text-gray-600">Fréquence: {cause.frequency} occurrences</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     cause.impact === 'high' ? 'bg-red-100 text-red-800' :
                     cause.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-green-100 text-green-800'
                   }`}>
-                    {cause.impact} impact
+                    Impact {cause.impact === 'high' ? 'élevé' :
+                           cause.impact === 'medium' ? 'moyen' :
+                           'faible'}
                   </span>
                 </div>
 
                 {cause.solutions.length > 0 && (
                   <div className="mt-3">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Proposed Solutions:</h5>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Solutions proposées:</h5>
                     <ul className="space-y-1">
                       {cause.solutions.map((solution, index) => (
                         <li key={index} className="text-sm text-gray-600 flex items-start">
@@ -375,7 +385,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {editingPlan ? 'Edit Action Plan' : 'New Action Plan'}
+                  {editingPlan ? 'Modifier le Plan d\'Action' : 'Nouveau Plan d\'Action'}
                 </h3>
                 <button onClick={() => setShowPlanForm(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="w-6 h-6" />
@@ -413,42 +423,42 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                       onChange={(e) => setPlanForm(prev => ({ ...prev, Durée: e.target.value as any }))}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="short">Court Terme</option>
-                      <option value="medium">Moyen Terme</option>
-                      <option value="long">Long Terme</option>
+                      <option value="short">Court terme</option>
+                      <option value="medium">Moyen terme</option>
+                      <option value="long">Long terme</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Priority</label>
+                    <label className="block text-sm font-medium text-gray-700">Priorité</label>
                     <select
                       value={planForm.priority}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, priority: e.target.value as any }))}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option value="low">Basse</option>
+                      <option value="medium">Moyenne</option>
+                      <option value="high">Haute</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <label className="block text-sm font-medium text-gray-700">Statut</label>
                     <select
                       value={planForm.status}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, status: e.target.value as any }))}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
+                      <option value="pending">En attente</option>
+                      <option value="in-progress">En cours</option>
+                      <option value="completed">Terminé</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Progress (%)</label>
+                    <label className="block text-sm font-medium text-gray-700">Progression (%)</label>
                     <input
                       type="number"
                       min="0"
@@ -461,7 +471,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+                  <label className="block text-sm font-medium text-gray-700">Assigné à</label>
                   <input
                     type="text"
                     value={planForm.assignedTo}
@@ -471,7 +481,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Due Date</label>
+                  <label className="block text-sm font-medium text-gray-700">Date d'échéance</label>
                   <input
                     type="date"
                     value={planForm.dueDate ? format(planForm.dueDate, 'yyyy-MM-dd') : ''}
@@ -489,13 +499,13 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                     onClick={() => setShowPlanForm(false)}
                     className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    Cancel
+                    Annuler
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                   >
-                    {editingPlan ? 'Update' : 'Create'}
+                    {editingPlan ? 'Mettre à jour' : 'Créer'}
                   </button>
                 </div>
               </form>
@@ -510,7 +520,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {editingCause ? 'Edit Cause' : 'Nouvelle Cause'}
+                  {editingCause ? 'Modifier la Cause' : 'Nouvelle Cause'}
                 </h3>
                 <button onClick={() => setShowCauseForm(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="w-6 h-6" />
@@ -525,9 +535,9 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                     onChange={(e) => setCauseForm(prev => ({ ...prev, type: e.target.value as any }))}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
-                    <option value="Technique">Technical</option>
+                    <option value="Technique">Technique</option>
                     <option value="Client">Client</option>
-                    <option value="Casse">Hardware</option>
+                    <option value="Casse">Matériel</option>
                   </select>
                 </div>
 
@@ -544,7 +554,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Frequency</label>
+                    <label className="block text-sm font-medium text-gray-700">Fréquence</label>
                     <input
                       type="number"
                       min="0"
@@ -562,9 +572,9 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                       onChange={(e) => setCauseForm(prev => ({ ...prev, impact: e.target.value as any }))}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option value="low">Faible</option>
+                      <option value="medium">Moyen</option>
+                      <option value="high">Élevé</option>
                     </select>
                   </div>
                 </div>
@@ -604,7 +614,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                     }))}
                     className="mt-2 text-sm text-blue-600 hover:text-blue-800"
                   >
-                    + Add Solution
+                    + Ajouter une solution
                   </button>
                 </div>
 
@@ -614,13 +624,13 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                     onClick={() => setShowCauseForm(false)}
                     className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    Cancel
+                    Annuler
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                   >
-                    {editingCause ? 'Update' : 'Create'}
+                    {editingCause ? 'Mettre à jour' : 'Créer'}
                   </button>
                 </div>
               </form>
