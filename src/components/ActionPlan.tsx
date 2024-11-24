@@ -194,14 +194,14 @@ function ActionPlan({ tickets }: ActionPlanProps) {
             className="btn-secondary"
           >
             <Plus className="w-4 h-4 mr-2" />
-            New Cause
+            Nouvelle Cause
           </button>
           <button
             onClick={() => setShowPlanForm(true)}
             className="btn-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
-            New Plan
+            Nouveau Plan
           </button>
         </div>
       </div>
@@ -302,7 +302,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
       <div className="mt-8">
         <h3 className="text-xl font-bold text-gray-900 flex items-center mb-4">
           <Target className="w-6 h-6 text-blue-600 mr-2" />
-          Root Causes Analysis
+          Analyse des Causes Racines
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -511,7 +511,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {editingCause ? 'Edit Cause' : 'New Cause'}
+                  {editingCause ? 'Edit Cause' : 'Nouvelle Cause'}
                 </h3>
                 <button onClick={() => setShowCauseForm(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="w-6 h-6" />

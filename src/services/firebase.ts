@@ -104,7 +104,7 @@ export async function getActionPlans(): Promise<ActionPlan[]> {
       } as ActionPlan;
     });
   } catch (error) {
-    console.error('Error getting action plans:', error);
+    console.error('Error getting Action Plans:', error);
     throw error;
   }
 }
