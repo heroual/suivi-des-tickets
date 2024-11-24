@@ -160,7 +160,7 @@ export default function CriticalCableTickets({
         }));
       }
 
-      alert('Import Duréeiné avec succès');
+      alert('Import terminé avec succès');
     } catch (error) {
       console.error('Import error:', error);
       alert('Erreur lors de l\'importation. Vérifiez le format du fichier.');
@@ -284,7 +284,7 @@ export default function CriticalCableTickets({
 
   return (
     <div className="bg-red-50 p-4 rounded-lg shadow-md mb-6 border border-red-200">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <AlertTriangle className="w-6 h-6 text-red-600" />
           <h2 className="text-lg font-semibold text-red-900">
@@ -293,17 +293,17 @@ export default function CriticalCableTickets({
         </div>
         
         {auth.currentUser && (
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowForm(true)}
-              className="btn-primary bg-red-600 hover:bg-red-700"
+              className="w-full sm:w-auto btn-primary bg-red-600 hover:bg-red-700 flex items-center justify-center"
             >
               <PlusCircle className="w-5 h-5 mr-2" />
-              Nouveau
+              <span>Nouveau</span>
             </button>
-            <label className="btn-primary bg-red-600 hover:bg-red-700 cursor-pointer">
+            <label className="w-full sm:w-auto btn-primary bg-red-600 hover:bg-red-700 cursor-pointer flex items-center justify-center">
               <Upload className="w-5 h-5 mr-2" />
-              Importer
+              <span>Importer</span>
               <input
                 type="file"
                 className="hidden"
@@ -315,7 +315,7 @@ export default function CriticalCableTickets({
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="mt-4 space-y-2">
         {criticalTickets.map((ticket) => (
           <div key={ticket.id} className="bg-white p-4 rounded-lg shadow-sm">
             <div className="flex justify-between items-start">
@@ -330,14 +330,14 @@ export default function CriticalCableTickets({
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEdit(ticket)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 hover:text-blue-800 p-2"
                     disabled={deletingTicketId === ticket.id}
                   >
                     <Edit2 className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => confirmDelete(ticket)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 p-2"
                     disabled={deletingTicketId === ticket.id}
                   >
                     {deletingTicketId === ticket.id ? (
