@@ -369,15 +369,17 @@ function App() {
           <DeviceManagement />
         ) : (
           <div className="space-y-8">
-            <CriticalCableTickets 
-              tickets={tickets}
-              onAddTicket={handleNewTicket}
-              onUpdateTicket={updateTicket}
-              onDeleteTicket={handleCloseTicket}
-            />
-            <ActionPlan tickets={tickets} />
-            <MonthlyIndicators tickets={tickets} />
             <PKIDisplay stats={pki} />
+            <MonthlyIndicators tickets={tickets} />
+            <div className="space-y-8">
+              <CriticalCableTickets 
+                tickets={tickets}
+                onAddTicket={handleNewTicket}
+                onUpdateTicket={updateTicket}
+                onDeleteTicket={handleCloseTicket}
+              />
+              <ActionPlan tickets={tickets} />
+            </div>
             
             <div className="grid grid-cols-1 gap-8">
               <CauseTypeChart tickets={tickets} />
