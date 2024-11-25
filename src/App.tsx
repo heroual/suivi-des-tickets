@@ -191,7 +191,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-dark-50 pb-safe-bottom transition-colors duration-300">
-      {/* Fixed Header */}
       <header className="bg-white dark:bg-dark shadow-lg sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
@@ -212,7 +211,6 @@ function App() {
         </div>
       </header>
 
-      {/* Futuristic Navigation Bar */}
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 shadow-xl mb-6 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center justify-between space-x-2 overflow-x-auto scrollbar-hide">
@@ -346,7 +344,6 @@ function App() {
         </div>
       </div>
 
-      {/* Date Display */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-white dark:bg-dark rounded-lg shadow-sm p-4 flex items-center justify-between transition-colors duration-300">
           <div className="flex items-center">
@@ -385,11 +382,11 @@ function App() {
             </div>
             
             <div className="grid grid-cols-1 gap-8">
+              <CauseTypeChart tickets={tickets} />
               <MonthlyStats tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <TicketForm onSubmit={handleNewTicket} />
                 <Dashboard dailyStats={dailyStats} />
-                <CauseTypeChart tickets={tickets} />
               </div>
             </div>
           </div>
