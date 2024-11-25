@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Clock, AlertTriangle, Activity, Edit2, Save, Plus, Trash2, X, Brain } from 'lucide-react';
-import type { DailyStats, ActionCause } from '../types';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Filter, FileSpreadsheet, Download, Search, X, Brain, TrendingUp, AlertTriangle, Activity, Plus, Edit2, Trash2, Save } from 'lucide-react';
+import type { Ticket, DailyStats, ActionCause } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { getActionCauses, addActionCause, updateActionCause, deleteActionCause } from '../services/firebase';
 
@@ -253,7 +253,7 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
               <h3 className="text-2xl font-bold mt-1">{latestStats.resolus}</h3>
             </div>
             <div className="bg-green-400 bg-opacity-40 rounded-full p-3">
-              <Users className="w-6 h-6" />
+              <Activity className="w-6 h-6" />
             </div>
           </div>
           <div className="mt-4 text-sm text-green-100">
@@ -269,7 +269,7 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
               <h3 className="text-2xl font-bold mt-1">{latestStats.horsDelai}</h3>
             </div>
             <div className="bg-amber-400 bg-opacity-40 rounded-full p-3">
-              <Clock className="w-6 h-6" />
+              <AlertTriangle className="w-6 h-6" />
             </div>
           </div>
           <div className="mt-4 text-sm text-amber-100">
@@ -370,7 +370,7 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
       {/* Causes Section */}
       <div className="bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl shadow-2xl p-6 overflow-hidden relative">
         {/* Animated background pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L2c+PC9zdmc+')] opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L2c+PC9zdmc+')] opacity-10 animate-pulse"></div>
 
         <div className="flex justify-between items-center mb-6 relative">
           <div className="flex items-center space-x-3">
