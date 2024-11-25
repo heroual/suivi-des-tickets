@@ -372,6 +372,7 @@ function App() {
             <PKIDisplay stats={pki} />
             <MonthlyIndicators tickets={tickets} />
             <div className="space-y-8">
+              <MonthlyStats tickets={tickets} />
               <CriticalCableTickets 
                 tickets={tickets}
                 onAddTicket={handleNewTicket}
@@ -383,7 +384,6 @@ function App() {
             
             <div className="grid grid-cols-1 gap-8">
               <CauseTypeChart tickets={tickets} />
-              <MonthlyStats tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <TicketForm onSubmit={handleNewTicket} />
                 <Dashboard dailyStats={dailyStats} />
