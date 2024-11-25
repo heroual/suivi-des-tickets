@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Clock, AlertTriangle, Activity, Edit2, Save, Plus, Trash2, X } from 'lucide-react';
+import { TrendingUp, Users, Clock, AlertTriangle, Activity, Edit2, Save, Plus, Trash2, X, Brain } from 'lucide-react';
 import type { DailyStats, ActionCause } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { getActionCauses, addActionCause, updateActionCause, deleteActionCause } from '../services/firebase';
@@ -17,6 +17,7 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
   const [showCauseForm, setShowCauseForm] = useState(false);
   const [editingCause, setEditingCause] = useState<ActionCause | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [causeForm, setCauseForm] = useState<Partial<ActionCause>>({
     type: 'Technique',
@@ -35,7 +36,9 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
       setLoading(true);
       const loadedCauses = await getActionCauses();
       setCauses(loadedCauses);
+      setError(null);
     } catch (error) {
+      setError('Error loading causes');
       console.error('Error loading causes:', error);
     } finally {
       setLoading(false);
@@ -57,17 +60,19 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
       resetCauseForm();
     } catch (error) {
       console.error('Error saving cause:', error);
+      setError('Error saving cause');
     }
   };
 
   const handleDeleteCause = async (id: string) => {
-    if (!isAdmin || !window.confirm('Êtes-vous sûr de vouloir supprimer cette cause ?')) return;
+    if (!isAdmin || !window.confirm('Are you sure you want to delete this cause?')) return;
     
     try {
       await deleteActionCause(id);
       await loadCauses();
     } catch (error) {
       console.error('Error deleting cause:', error);
+      setError('Error deleting cause');
     }
   };
 
@@ -363,95 +368,116 @@ export default function Dashboard({ dailyStats }: DashboardProps) {
       </div>
 
       {/* Causes Section */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Causes Identifiées</h3>
+      <div className="bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl shadow-2xl p-6 overflow-hidden relative">
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L2c+PC9zdmc+')] opacity-10"></div>
+
+        <div className="flex justify-between items-center mb-6 relative">
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-500/20 backdrop-blur-xl p-3 rounded-xl ring-1 ring-blue-500/50">
+              <Brain className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Causes Identifiées</h2>
+              <p className="text-blue-300 text-sm">Distribution des incidents</p>
+            </div>
+          </div>
           {isAdmin && (
             <button
               onClick={() => setShowCauseForm(true)}
-              className="btn-primary"
+              className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-xl backdrop-blur-xl transition-all duration-200 ring-1 ring-blue-500/50 flex items-center space-x-2"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle Cause
+              <Plus className="w-4 h-4" />
+              <span>Nouvelle Cause</span>
             </button>
           )}
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {causes.map((cause) => (
-              <div 
-                key={cause.id} 
-                className={`rounded-lg p-4 ${
-                  cause.type === 'Technique' ? 'bg-blue-50' :
-                  cause.type === 'Client' ? 'bg-green-50' : 'bg-amber-50'
-                }`}
-              >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {causes.map((cause) => (
+            <div 
+              key={cause.id} 
+              className={`group relative overflow-hidden rounded-xl backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] ${
+                cause.type === 'Technique' ? 'bg-blue-500/10 ring-1 ring-blue-500/30' :
+                cause.type === 'Client' ? 'bg-green-500/10 ring-1 ring-green-500/30' :
+                'bg-amber-500/10 ring-1 ring-amber-500/30'
+              }`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              
+              <div className="p-5">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      cause.type === 'Technique' ? 'bg-blue-100 text-blue-800' :
-                      cause.type === 'Client' ? 'bg-green-100 text-green-800' :
-                      'bg-amber-100 text-amber-800'
-                    }`}>
-                      {cause.type}
-                    </span>
-                    <p className="mt-2 text-sm font-medium">{cause.description}</p>
-                  </div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-xl ${
+                    cause.type === 'Technique' ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30' :
+                    cause.type === 'Client' ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/30' :
+                    'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30'
+                  }`}>
+                    {cause.type}
+                  </span>
                   {isAdmin && (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => {
                           setEditingCause(cause);
                           setCauseForm(cause);
                           setShowCauseForm(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="p-1.5 rounded-full hover:bg-white/10 text-blue-300 transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteCause(cause.id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="p-1.5 rounded-full hover:bg-white/10 text-red-300 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   )}
                 </div>
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Fréquence: {cause.frequency}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      cause.impact === 'high' ? 'bg-red-100 text-red-800' :
-                      cause.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+
+                <p className="mt-4 text-white/90 font-medium">{cause.description}</p>
+
+                <div className="mt-4 flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full animate-pulse ${
+                      cause.impact === 'high' ? 'bg-red-400' :
+                      cause.impact === 'medium' ? 'bg-amber-400' :
+                      'bg-green-400'
+                    }`}></div>
+                    <span className="text-white/70">
                       Impact {
                         cause.impact === 'high' ? 'élevé' :
                         cause.impact === 'medium' ? 'moyen' : 'faible'
                       }
                     </span>
                   </div>
-                  {cause.solutions && cause.solutions.length > 0 && (
-                    <div className="mt-3">
-                      <h4 className="text-sm font-medium text-gray-900">Solutions proposées:</h4>
-                      <ul className="mt-2 space-y-1">
-                        {cause.solutions.map((solution, index) => (
-                          <li key={index} className="text-sm text-gray-600">• {solution}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <span className="text-white/70">
+                    {cause.frequency} occurrences
+                  </span>
                 </div>
+
+                {cause.solutions && cause.solutions.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <h4 className="text-sm font-medium text-white/90 mb-2">Solutions proposées:</h4>
+                    <ul className="space-y-2">
+                      {cause.solutions.map((solution, index) => (
+                        <li key={index} className="flex items-start space-x-2 group/item">
+                          <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${
+                            cause.type === 'Technique' ? 'bg-blue-400' :
+                            cause.type === 'Client' ? 'bg-green-400' :
+                            'bg-amber-400'
+                          } group-hover/item:scale-125 transition-transform duration-200`}></span>
+                          <span className="text-sm text-white/70 flex-1">{solution}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {showCauseForm && isAdmin && <CauseForm />}
