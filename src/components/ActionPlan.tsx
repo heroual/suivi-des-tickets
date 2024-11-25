@@ -641,5 +641,81 @@ function ActionPlan({ tickets }: ActionPlanProps) {
     </div>
   );
 }
+// ... previous imports remain the same
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 
+export default function ActionPlan({ tickets }: ActionPlanProps) {
+  const { isAdmin } = useAuth();
+  
+  // ... rest of the component code remains the same until the return statement
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <p className="ml-3 text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center">
+          <Brain className="w-6 h-6 text-blue-600 mr-2" />
+          Plans d'Action
+        </h2>
+        {isAdmin && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowCauseForm(true)}
+              className="btn-secondary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle Cause
+            </button>
+            <button
+              onClick={() => setShowPlanForm(true)}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau Plan
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!isAdmin && <AccessDeniedMessage />}
+
+      {/* Rest of the component remains the same, but wrap edit/delete buttons with isAdmin check */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {plans.map(plan => (
+          <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+            {/* ... other plan content ... */}
+            {isAdmin && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleEdit(plan)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(plan.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {showForm && isAdmin && <PlanForm />}
+      {showCauseForm && isAdmin && <CauseForm />}
+    </div>
+  );
+}
 export default ActionPlan;

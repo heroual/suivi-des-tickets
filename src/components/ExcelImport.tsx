@@ -3,6 +3,8 @@ import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from '
 import * as XLSX from 'xlsx';
 import type { Ticket } from '../types';
 import { parse, format } from 'date-fns';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 
 interface ExcelImportProps {
   isOpen: boolean;
@@ -16,8 +18,13 @@ interface ImportStatus {
 }
 
 export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportProps) {
+  const { isAdmin } = useAuth();
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (!isAdmin) {
+    return <AccessDeniedMessage />;
+  }
 
   if (!isOpen) return null;
 
@@ -156,7 +163,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
 
-    // Ajout des validations de données
+    // Add data validations
     ws['!datavalidation'] = {
       B2: {
         type: 'list',
@@ -164,7 +171,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"FIBRE,ADSL,DEGROUPAGE,FIXE"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitre: 'Erreur'
+        errorTitle: 'Erreur'
       },
       E2: {
         type: 'list',
@@ -172,7 +179,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"Technique,Client,Casse"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitre: 'Erreur'
+        errorTitle: 'Erreur'
       },
       F2: {
         type: 'list',
@@ -180,7 +187,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"BRAHIM,ABDERAHMAN,AXE"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitre: 'Erreur'
+        errorTitle: 'Erreur'
       },
       K2: {
         type: 'list',
@@ -188,7 +195,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         formula1: '"true,false"',
         showErrorMessage: true,
         error: 'Valeur invalide',
-        errorTitre: 'Erreur'
+        errorTitle: 'Erreur'
       }
     };
 

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 import { PlusCircle, Clock } from 'lucide-react';
 import type { ServiceType, Ticket, Technician, CauseType } from '../types';
 import { format } from 'date-fns';
@@ -10,6 +12,7 @@ interface TicketFormProps {
 }
 
 export default function TicketForm({ onSubmit, initialData, isEdit = false }: TicketFormProps) {
+  const { isAdmin } = useAuth();
   const [ndLogin, setNdLogin] = useState(initialData?.ndLogin || '');
   const [serviceType, setServiceType] = useState<ServiceType>(initialData?.serviceType || 'FIBRE');
   const [description, setDescription] = useState(initialData?.description || '');
@@ -25,6 +28,10 @@ export default function TicketForm({ onSubmit, initialData, isEdit = false }: Ti
   const [dateCloture, setDateCloture] = useState<string>(
     initialData?.dateCloture ? format(initialData.dateCloture, "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")
   );
+
+  if (!isAdmin) {
+    return <AccessDeniedMessage />;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +74,7 @@ export default function TicketForm({ onSubmit, initialData, isEdit = false }: Ti
           </>
         )}
       </h2>
+
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

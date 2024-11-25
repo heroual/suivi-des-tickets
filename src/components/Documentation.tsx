@@ -95,3 +95,106 @@ export default function Documentation({ isOpen, onClose }: DocumentationProps) {
     </div>
   );
 }
+// ... previous imports remain the same
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
+
+export default function DeviceManagement() {
+  const { isAdmin } = useAuth();
+  
+  // ... rest of the component code remains the same until the return statement
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <Router className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Gestion des Équipements
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Routeurs et points d'accès installés
+                </p>
+              </div>
+            </div>
+            {isAdmin && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="btn-primary"
+                >
+                  <PlusCircle className="w-5 h-5 mr-2" />
+                  Nouvel équipement
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="btn-secondary"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Exporter Excel
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!isAdmin && <AccessDeniedMessage />}
+
+          {/* Rest of the component remains the same, but wrap edit/delete buttons with isAdmin check */}
+          <div className="mt-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher un équipement..."
+                value={searchDurée}
+                onChange={(e) => setSearchDurée(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table content */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            {/* ... table header ... */}
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredDevices.map((device) => (
+                <tr key={device.id} className="hover:bg-gray-50">
+                  {/* ... device data cells ... */}
+                  {isAdmin && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(device)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(device.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showForm && isAdmin && <DeviceForm />}
+    </div>
+  );
+}

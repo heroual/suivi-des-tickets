@@ -23,7 +23,7 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const isAdmin = userProfile?.role === 'admin';
+  const isAdmin = userProfile?.role === 'admin' && user?.email === 'admin@sticket.ma';
 
   return {
     user,

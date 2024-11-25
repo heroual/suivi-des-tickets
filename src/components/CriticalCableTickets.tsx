@@ -364,3 +364,107 @@ export default function CriticalCableTickets({
     </div>
   );
 }
+import React, { useState } from 'react';
+import { AlertTriangle, PlusCircle, X, Edit2, Trash2, Upload, Loader } from 'lucide-react';
+import type { Ticket, ServiceType, Technician } from '../types';
+import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
+
+// ... rest of the imports
+
+export default function CriticalCableTickets({ 
+  tickets, 
+  onAddTicket,
+  onUpdateTicket,
+  onDeleteTicket 
+}: CriticalCableTicketsProps) {
+  const { isAdmin } = useAuth();
+  
+  // ... rest of the component code remains the same until the return statement
+
+  return (
+    <div className="bg-red-50 p-4 rounded-lg shadow-md mb-6 border border-red-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div className="flex items-center space-x-2">
+          <AlertTriangle className="w-6 h-6 text-red-600" />
+          <h2 className="text-lg font-semibold text-red-900">
+            Tickets Critiques ({criticalTickets.length})
+          </h2>
+        </div>
+        
+        {isAdmin && (
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full sm:w-auto btn-primary bg-red-600 hover:bg-red-700 flex items-center justify-center"
+            >
+              <PlusCircle className="w-5 h-5 mr-2" />
+              <span>Nouveau</span>
+            </button>
+            <label className="w-full sm:w-auto btn-primary bg-red-600 hover:bg-red-700 cursor-pointer flex items-center justify-center">
+              <Upload className="w-5 h-5 mr-2" />
+              <span>Importer</span>
+              <input
+                type="file"
+                className="hidden"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcel}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {!isAdmin && <AccessDeniedMessage />}
+
+      <div className="mt-4 space-y-2">
+        {criticalTickets.map((ticket) => (
+          <div key={ticket.id} className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-medium text-red-900">{ticket.ndLogin}</div>
+                <div className="text-sm text-gray-600">{ticket.description}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm')}
+                </div>
+              </div>
+              {isAdmin && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEdit(ticket)}
+                    className="text-blue-600 hover:text-blue-800 p-2"
+                    disabled={deletingTicketId === ticket.id}
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => confirmDelete(ticket)}
+                    className="text-red-600 hover:text-red-800 p-2"
+                    disabled={deletingTicketId === ticket.id}
+                  >
+                    {deletingTicketId === ticket.id ? (
+                      <Loader className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        
+        {criticalTickets.length === 0 && (
+          <div className="text-center text-gray-500 py-4">
+            Aucun ticket critique en attente
+          </div>
+        )}
+      </div>
+
+      {showForm && isAdmin && <TicketForm />}
+      {showDeleteConfirm && isAdmin && <DeleteConfirmationModal />}
+    </div>
+  );
+}
