@@ -4,13 +4,16 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 import type { Device, DeviceType, Technician } from '../types';
-import { addDevice, updateDevice, deleteDevice, getDevices, auth } from '../services/firebase';
+import { addDevice, updateDevice, deleteDevice, getDevices } from '../services/firebase';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 
 export default function DeviceManagement() {
+  const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
-  const [searchDurée, setSearchDurée] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -39,6 +42,8 @@ export default function DeviceManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
+
     try {
       if (editingDevice) {
         await updateDevice(editingDevice.id, {
@@ -61,6 +66,7 @@ export default function DeviceManagement() {
   };
 
   const handleEdit = (device: Device) => {
+    if (!isAdmin) return;
     setEditingDevice(device);
     setFormData({
       ndLogin: device.ndLogin,
@@ -74,14 +80,14 @@ export default function DeviceManagement() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet équipement ?')) {
-      try {
-        await deleteDevice(id);
-        await loadDevices();
-      } catch (error) {
-        console.error('Error deleting device:', error);
-        alert('Erreur lors de la suppression');
-      }
+    if (!isAdmin || !window.confirm('Êtes-vous sûr de vouloir supprimer cet équipement ?')) return;
+    
+    try {
+      await deleteDevice(id);
+      await loadDevices();
+    } catch (error) {
+      console.error('Error deleting device:', error);
+      alert('Erreur lors de la suppression');
     }
   };
 
@@ -113,7 +119,6 @@ export default function DeviceManagement() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Équipements');
 
-    // Set column widths
     ws['!cols'] = [
       { wch: 15 }, // ND/Login
       { wch: 15 }, // N° Réclamation
@@ -128,7 +133,7 @@ export default function DeviceManagement() {
   };
 
   const filteredDevices = devices.filter(device => {
-    const searchStr = searchDurée.toLowerCase();
+    const searchStr = searchTerm.toLowerCase();
     return (
       device.ndLogin.toLowerCase().includes(searchStr) ||
       device.reclamationNumber.toLowerCase().includes(searchStr) ||
@@ -273,7 +278,7 @@ export default function DeviceManagement() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {auth.currentUser && (
+              {isAdmin && (
                 <button
                   onClick={() => setShowForm(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -297,8 +302,8 @@ export default function DeviceManagement() {
               <input
                 type="text"
                 placeholder="Rechercher un équipement..."
-                value={searchDurée}
-                onChange={(e) => setSearchDurée(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -307,6 +312,8 @@ export default function DeviceManagement() {
             </div>
           </div>
         </div>
+
+        {!isAdmin && <AccessDeniedMessage />}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -339,7 +346,7 @@ export default function DeviceManagement() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date d'installation
                   </th>
-                  {auth.currentUser && (
+                  {isAdmin && (
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -375,7 +382,7 @@ export default function DeviceManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {format(device.dateInstalled, 'dd/MM/yyyy HH:mm')}
                     </td>
-                    {auth.currentUser && (
+                    {isAdmin && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex space-x-2">
                           <button
@@ -397,7 +404,7 @@ export default function DeviceManagement() {
                 ))}
                 {filteredDevices.length === 0 && (
                   <tr>
-                    <td colSpan={auth.currentUser ? 8 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={isAdmin ? 8 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
                       Aucun équipement trouvé
                     </td>
                   </tr>
@@ -408,7 +415,7 @@ export default function DeviceManagement() {
         </div>
       </div>
 
-      {showForm && <DeviceForm />}
+      {showForm && isAdmin && <DeviceForm />}
     </div>
   );
 }
