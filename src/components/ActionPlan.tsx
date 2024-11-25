@@ -28,12 +28,15 @@ import {
   deleteActionCause,
   getActionCauses
 } from '../services/firebase';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 
 interface ActionPlanProps {
   tickets: Ticket[];
 }
 
-function ActionPlan({ tickets }: ActionPlanProps) {
+export default function ActionPlan({ tickets }: ActionPlanProps) {
+  const { isAdmin } = useAuth();
   const [plans, setPlans] = useState<ActionPlanType[]>([]);
   const [causes, setCauses] = useState<ActionCause[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +88,8 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
   const handleAddPlan = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
+
     try {
       if (editingPlan) {
         await updateActionPlan(editingPlan.id, planForm);
@@ -101,7 +106,8 @@ function ActionPlan({ tickets }: ActionPlanProps) {
   };
 
   const handleDeletePlan = async (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?')) return;
+    if (!isAdmin || !window.confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?')) return;
+    
     try {
       await deleteActionPlan(id);
       await loadData();
@@ -113,6 +119,8 @@ function ActionPlan({ tickets }: ActionPlanProps) {
 
   const handleAddCause = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
+
     try {
       if (editingCause) {
         await updateActionCause(editingCause.id, causeForm);
@@ -129,7 +137,8 @@ function ActionPlan({ tickets }: ActionPlanProps) {
   };
 
   const handleDeleteCause = async (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette cause ?')) return;
+    if (!isAdmin || !window.confirm('Êtes-vous sûr de vouloir supprimer cette cause ?')) return;
+    
     try {
       await deleteActionCause(id);
       await loadData();
@@ -187,25 +196,28 @@ function ActionPlan({ tickets }: ActionPlanProps) {
           <Brain className="w-6 h-6 text-blue-600 mr-2" />
           Plans d'Action
         </h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setShowCauseForm(true)}
-            className="btn-secondary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvelle Cause
-          </button>
-          <button
-            onClick={() => setShowPlanForm(true)}
-            className="btn-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau Plan
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowCauseForm(true)}
+              className="btn-secondary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle Cause
+            </button>
+            <button
+              onClick={() => setShowPlanForm(true)}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau Plan
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Plans d'Action */}
+      {!isAdmin && <AccessDeniedMessage />}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {plans.map(plan => (
           <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
@@ -214,24 +226,26 @@ function ActionPlan({ tickets }: ActionPlanProps) {
                 <h4 className="font-semibold text-gray-900">{plan.Titre}</h4>
                 <p className="text-sm text-gray-600 mt-1">{plan.description}</p>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    setEditingPlan(plan);
-                    setPlanForm(plan);
-                    setShowPlanForm(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDeletePlan(plan.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setEditingPlan(plan);
+                      setPlanForm(plan);
+                      setShowPlanForm(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeletePlan(plan.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 space-y-2">
@@ -305,81 +319,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
         ))}
       </div>
 
-      {/* Causes */}
-      <div className="mt-8">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center mb-4">
-          <Target className="w-6 h-6 text-blue-600 mr-2" />
-          Analyse des Causes
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {causes.map(cause => (
-            <div key={cause.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    cause.type === 'Technique' ? 'bg-blue-100 text-blue-800' :
-                    cause.type === 'Client' ? 'bg-green-100 text-green-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {cause.type}
-                  </span>
-                  <p className="text-sm text-gray-600 mt-2">{cause.description}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      setEditingCause(cause);
-                      setCauseForm(cause);
-                      setShowCauseForm(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCause(cause.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Fréquence: {cause.frequency} occurrences</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    cause.impact === 'high' ? 'bg-red-100 text-red-800' :
-                    cause.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    Impact {cause.impact === 'high' ? 'élevé' :
-                           cause.impact === 'medium' ? 'moyen' :
-                           'faible'}
-                  </span>
-                </div>
-
-                {cause.solutions.length > 0 && (
-                  <div className="mt-3">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Solutions proposées:</h5>
-                    <ul className="space-y-1">
-                      {cause.solutions.map((solution, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          {solution}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {showPlanForm && (
+      {showPlanForm && isAdmin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
             <div className="p-6">
@@ -514,7 +454,7 @@ function ActionPlan({ tickets }: ActionPlanProps) {
         </div>
       )}
 
-      {showCauseForm && (
+      {showCauseForm && isAdmin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
             <div className="p-6">
@@ -641,81 +581,3 @@ function ActionPlan({ tickets }: ActionPlanProps) {
     </div>
   );
 }
-// ... previous imports remain the same
-import { useAuth } from '../hooks/useAuth';
-import AccessDeniedMessage from './AccessDeniedMessage';
-
-export default function ActionPlan({ tickets }: ActionPlanProps) {
-  const { isAdmin } = useAuth();
-  
-  // ... rest of the component code remains the same until the return statement
-
-  return (
-    <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-          <div className="flex">
-            <AlertTriangle className="h-5 w-5 text-red-400" />
-            <p className="ml-3 text-sm text-red-700">{error}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center">
-          <Brain className="w-6 h-6 text-blue-600 mr-2" />
-          Plans d'Action
-        </h2>
-        {isAdmin && (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setShowCauseForm(true)}
-              className="btn-secondary"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle Cause
-            </button>
-            <button
-              onClick={() => setShowPlanForm(true)}
-              className="btn-primary"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau Plan
-            </button>
-          </div>
-        )}
-      </div>
-
-      {!isAdmin && <AccessDeniedMessage />}
-
-      {/* Rest of the component remains the same, but wrap edit/delete buttons with isAdmin check */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {plans.map(plan => (
-          <div key={plan.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-            {/* ... other plan content ... */}
-            {isAdmin && (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEdit(plan)}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(plan.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {showForm && isAdmin && <PlanForm />}
-      {showCauseForm && isAdmin && <CauseForm />}
-    </div>
-  );
-}
-export default ActionPlan;
