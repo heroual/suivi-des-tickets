@@ -1,6 +1,12 @@
 export type ServiceType = 'FIBRE' | 'ADSL' | 'DEGROUPAGE' | 'FIXE';
 export type Technician = 'BRAHIM' | 'ABDERAHMAN' | 'AXE';
 export type CauseType = 'Technique' | 'Client' | 'Casse';
+export type UserRole = 'admin' | 'viewer';
+
+export interface UserProfile {
+  email: string;
+  role: UserRole;
+}
 
 export interface Ticket {
   id: string;
@@ -82,7 +88,7 @@ export interface EmailConfig {
   enabled: boolean;
   recipients: string[];
   schedule: 'daily' | 'weekly' | 'monthly';
-  sendTime: string; // HH:mm format
+  sendTime: string;
   includeMetrics: boolean;
   includeCriticalTickets: boolean;
   includeFullReport: boolean;
