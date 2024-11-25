@@ -1,9 +1,10 @@
+import ActionPlanButton from './components/ActionPlanButton';
+import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useAuth } from './hooks/useAuth';
 import TicketForm from './components/TicketForm';
 import AllTickets from './components/AllTickets';
 import Dashboard from './components/Dashboard';
@@ -28,7 +29,6 @@ import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
 function App() {
-  const { isAdmin } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
@@ -75,6 +75,33 @@ function App() {
     }
   };
 
+  const calculateDailyStats = () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayTickets = tickets.filter(
+      (ticket) => format(ticket.dateCreation, 'yyyy-MM-dd') === today
+    );
+
+    const stats: DailyStats = {
+      date: format(new Date(), 'd MMM', { locale: fr }),
+      total: todayTickets.length,
+      resolus: todayTickets.filter((t) => t.status === 'CLOTURE').length,
+      horsDelai: todayTickets.filter((t) => !t.delaiRespect).length,
+      reouvertures: todayTickets.filter((t) => t.reopened).length,
+    };
+
+    setDailyStats((prev) => {
+      const existing = prev.find((s) => s.date === stats.date);
+      if (existing) {
+        return prev.map((s) => (s.date === stats.date ? stats : s));
+      }
+      return [...prev, stats].slice(-7);
+    });
+  };
+
+  useEffect(() => {
+    calculateDailyStats();
+  }, [tickets]);
+
   const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
     if (!currentUser) {
       setShowAuthModal(true);
@@ -92,6 +119,17 @@ function App() {
     } catch (error) {
       console.error('Error adding ticket:', error);
       alert('Failed to add ticket. Please try again.');
+    }
+  };
+
+  const handleImportTickets = async (importedTickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
+    try {
+      await addMultipleTickets(importedTickets);
+      await loadTickets();
+      setShowExcelImport(false);
+    } catch (error) {
+      console.error('Error importing tickets:', error);
+      alert('Failed to import tickets. Please try again.');
     }
   };
 
@@ -117,17 +155,6 @@ function App() {
     } catch (error) {
       console.error('Error logging out:', error);
       alert('Failed to log out. Please try again.');
-    }
-  };
-
-  const handleImportTickets = async (tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
-    try {
-      await addMultipleTickets(tickets);
-      await loadTickets();
-      setShowExcelImport(false);
-    } catch (error) {
-      console.error('Error importing tickets:', error);
-      alert('Failed to import tickets. Please try again.');
     }
   };
 
@@ -164,7 +191,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-dark-50 pb-safe-bottom transition-colors duration-300">
-      {/* Header */}
+      {/* Fixed Header */}
       <header className="bg-white dark:bg-dark shadow-lg sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
@@ -185,6 +212,155 @@ function App() {
         </div>
       </header>
 
+      {/* Futuristic Navigation Bar */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 shadow-xl mb-6 transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-between space-x-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => {
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                !showAnalytics && !showAllTickets && !showDeviceManagement && !showYearlyTimeline
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105 dark:bg-dark-900 dark:text-blue-400'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Zap className="w-5 h-5" />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowAnalytics(true);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showAnalytics
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105 dark:bg-dark-900 dark:text-blue-400'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <BarChart2 className="w-5 h-5" />
+              <span>Analytics</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowAllTickets(true);
+                setShowAnalytics(false);
+                setShowDeviceManagement(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showAllTickets
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105 dark:bg-dark-900 dark:text-blue-400'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <History className="w-5 h-5" />
+              <span>Historique</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowDeviceManagement(true);
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowYearlyTimeline(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showDeviceManagement
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105 dark:bg-dark-900 dark:text-blue-400'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Router className="w-5 h-5" />
+              <span>Équipements</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowYearlyTimeline(true);
+                setShowAnalytics(false);
+                setShowAllTickets(false);
+                setShowDeviceManagement(false);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showYearlyTimeline
+                  ? 'bg-white text-blue-900 shadow-lg transform scale-105 dark:bg-dark-900 dark:text-blue-400'
+                  : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Calendar className="w-5 h-5" />
+              <span>Timeline</span>
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowExcelImport(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+                <span>Import</span>
+              </button>
+
+              <button
+                onClick={() => setShowPKICalculator(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+              >
+                <Calculator className="w-5 h-5" />
+                <span>PKI</span>
+              </button>
+
+              <button
+                onClick={() => setShowDocumentation(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+              >
+                <BookOpen className="w-5 h-5" />
+                <span>Docs</span>
+              </button>
+
+              <button
+                onClick={() => setShowInfo(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+              >
+                <Info className="w-5 h-5" />
+                <span>Info</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-red-500 transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Date Display */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="bg-white dark:bg-dark rounded-lg shadow-sm p-4 flex items-center justify-between transition-colors duration-300">
+          <div className="flex items-center">
+            <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
+            <span className="text-lg font-medium text-gray-900 dark:text-white">
+              {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
+            </span>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Semaine {format(new Date(), 'w', { locale: fr })}
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
         {showYearlyTimeline ? (
           <YearlyTimeline tickets={tickets} />
@@ -201,17 +377,17 @@ function App() {
             <div className="space-y-8">
               <CriticalCableTickets 
                 tickets={tickets}
-                onAddTicket={isAdmin ? handleNewTicket : undefined}
-                onUpdateTicket={isAdmin ? updateTicket : undefined}
-                onDeleteTicket={isAdmin ? handleCloseTicket : undefined}
+                onAddTicket={handleNewTicket}
+                onUpdateTicket={updateTicket}
+                onDeleteTicket={handleCloseTicket}
               />
-              <ActionPlan tickets={tickets} isAdmin={isAdmin} />
+              <ActionPlan tickets={tickets} />
             </div>
             
             <div className="grid grid-cols-1 gap-8">
               <MonthlyStats tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {isAdmin && <TicketForm onSubmit={handleNewTicket} />}
+                <TicketForm onSubmit={handleNewTicket} />
                 <Dashboard dailyStats={dailyStats} />
                 <CauseTypeChart tickets={tickets} />
               </div>
@@ -233,6 +409,12 @@ function App() {
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
+      <ActionPlanButton onClick={() => setShowActionPlan(true)} />
+      <ActionPlanModal 
+        isOpen={showActionPlan}
+        onClose={() => setShowActionPlan(false)}
+        tickets={tickets}
+      />
       <ThemeToggle />
     </div>
   );
