@@ -226,81 +226,6 @@ export default function ActionPlanContent({ tickets }: ActionPlanContentProps) {
     </div>
   );
 
-  const CausesList = () => (
-    <div className="mt-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Causes Identifiées</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {causes.map((cause) => (
-          <div 
-            key={cause.id} 
-            className={`rounded-lg p-4 ${
-              cause.type === 'Technique' ? 'bg-blue-50' :
-              cause.type === 'Client' ? 'bg-green-50' : 'bg-amber-50'
-            }`}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  cause.type === 'Technique' ? 'bg-blue-100 text-blue-800' :
-                  cause.type === 'Client' ? 'bg-green-100 text-green-800' :
-                  'bg-amber-100 text-amber-800'
-                }`}>
-                  {cause.type}
-                </span>
-                <p className="mt-2 text-sm font-medium">{cause.description}</p>
-              </div>
-              {isAdmin && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      setEditingCause(cause);
-                      setCauseForm(cause);
-                      setShowCauseForm(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCause(cause.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Fréquence: {cause.frequency}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  cause.impact === 'high' ? 'bg-red-100 text-red-800' :
-                  cause.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  Impact {
-                    cause.impact === 'high' ? 'élevé' :
-                    cause.impact === 'medium' ? 'moyen' : 'faible'
-                  }
-                </span>
-              </div>
-              {cause.solutions && cause.solutions.length > 0 && (
-                <div className="mt-3">
-                  <h4 className="text-sm font-medium text-gray-900">Solutions proposées:</h4>
-                  <ul className="mt-2 space-y-1">
-                    {cause.solutions.map((solution, index) => (
-                      <li key={index} className="text-sm text-gray-600">• {solution}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Navigation Tabs */}
@@ -391,21 +316,122 @@ export default function ActionPlanContent({ tickets }: ActionPlanContentProps) {
       )}
 
       {/* Content */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {activeTab === 'actions' && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 flex items-center mb-6">
-              <Brain className="w-6 h-6 text-blue-600 mr-2" />
-              Analyse des Causes Racines
-            </h2>
-            <ActionsList tickets={tickets} isEditing={isEditing} />
+            {/* Causes Identifiées Section - Moved Up */}
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <CausesList />
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 shadow-lg border border-blue-100">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Brain className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">Causes Identifiées</h2>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setShowCauseForm(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nouvelle Cause
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {causes.map((cause) => (
+                    <div 
+                      key={cause.id} 
+                      className={`relative overflow-hidden rounded-lg p-6 transition-all duration-200 hover:shadow-lg ${
+                        cause.type === 'Technique' ? 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200' :
+                        cause.type === 'Client' ? 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200' :
+                        'bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          cause.type === 'Technique' ? 'bg-blue-100 text-blue-800' :
+                          cause.type === 'Client' ? 'bg-green-100 text-green-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {cause.type}
+                        </span>
+                        {isAdmin && (
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => {
+                                setEditingCause(cause);
+                                setCauseForm(cause);
+                                setShowCauseForm(true);
+                              }}
+                              className="p-1 rounded-full hover:bg-white/50 transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCause(cause.id)}
+                              className="p-1 rounded-full hover:bg-white/50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="mt-4 text-sm font-medium text-gray-800">{cause.description}</p>
+
+                      <div className="mt-4 flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            cause.impact === 'high' ? 'bg-red-500' :
+                            cause.impact === 'medium' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}></div>
+                          <span className="text-gray-600">
+                            Impact {
+                              cause.impact === 'high' ? 'élevé' :
+                              cause.impact === 'medium' ? 'moyen' : 'faible'
+                            }
+                          </span>
+                        </div>
+                        <span className="text-gray-600">
+                          {cause.frequency} occurrences
+                        </span>
+                      </div>
+
+                      {cause.solutions && cause.solutions.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">Solutions proposées:</h4>
+                          <ul className="space-y-2">
+                            {cause.solutions.map((solution, index) => (
+                              <li key={index} className="flex items-start space-x-2">
+                                <span className="text-blue-500 mt-1">•</span>
+                                <span className="text-sm text-gray-600 flex-1">{solution}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
+
+            {/* Analysis Section */}
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center mb-6">
+                <Brain className="w-6 h-6 text-blue-600 mr-2" />
+                Analyse des Causes Racines
+              </h2>
+              <ActionsList tickets={tickets} isEditing={isEditing} />
+            </div>
           </div>
         )}
         {activeTab === 'network' && (
