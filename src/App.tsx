@@ -120,6 +120,17 @@ function App() {
     }
   };
 
+  const handleImportTickets = async (tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
+    try {
+      await addMultipleTickets(tickets);
+      await loadTickets();
+      setShowExcelImport(false);
+    } catch (error) {
+      console.error('Error importing tickets:', error);
+      alert('Failed to import tickets. Please try again.');
+    }
+  };
+
   const pki = calculatePKI(tickets);
 
   if (loading) {
