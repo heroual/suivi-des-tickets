@@ -1,8 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch, setDoc, getDoc } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
-import type { Ticket, Device } from '../types';
-import { ActionPlan, ActionCause } from '../types';
+import type { Ticket, Device, ActionPlan, ActionCause, EmailConfig, UserProfile } from '../types';
 import { nanoid } from 'nanoid';
 
 const firebaseConfig = {
@@ -14,14 +13,19 @@ const firebaseConfig = {
   appId: "1:595964409945:web:cbd0957eb6c8da450c5948"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 export const auth = getAuth(app);
 
+// Collections
 export const ticketsCollection = collection(db, 'tickets');
 export const devicesCollection = collection(db, 'devices');
+export const actionPlansCollection = collection(db, 'actionPlans');
+export const actionCausesCollection = collection(db, 'actionCauses');
+export const emailConfigCollection = collection(db, 'emailConfig');
+export const usersCollection = collection(db, 'users');
 
+// Auth functions
 export async function loginUser(email: string, password: string): Promise<User> {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -31,8 +35,7 @@ export async function loginUser(email: string, password: string): Promise<User> 
     throw error;
   }
 }
-export const actionPlansCollection = collection(db, 'actionPlans');
-export const actionCausesCollection = collection(db, 'actionCauses');
+
 export async function logoutUser(): Promise<void> {
   try {
     await signOut(auth);
@@ -41,6 +44,31 @@ export async function logoutUser(): Promise<void> {
     throw error;
   }
 }
+
+export async function getUserRole(userId: string): Promise<UserProfile | null> {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return userDoc.data() as UserProfile;
+    }
+    // If no role is set, create a default viewer role
+    const defaultProfile: UserProfile = {
+      email: auth.currentUser?.email || '',
+      role: 'viewer'
+    };
+    // Only set admin role for the specified email
+    if (auth.currentUser?.email === 'admin@sticket.ma') {
+      defaultProfile.role = 'admin';
+    }
+    await setDoc(doc(db, 'users', userId), defaultProfile);
+    return defaultProfile;
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return null;
+  }
+}
+
+// Action Plans CRUD
 export async function addActionPlan(plan: Omit<ActionPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
@@ -109,7 +137,7 @@ export async function getActionPlans(): Promise<ActionPlan[]> {
   }
 }
 
-// Action Causes CRUD Operations
+// Action Causes CRUD
 export async function addActionCause(cause: Omit<ActionCause, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
@@ -176,6 +204,8 @@ export async function getActionCauses(): Promise<ActionCause[]> {
     throw error;
   }
 }
+
+// Tickets CRUD
 export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
@@ -306,7 +336,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
         userId: auth.currentUser.uid
       });
 
-      newTickets.push({ ...newTicket, id: docRef.id });
+      newTickets.push({ ...newTicket, id: docRef.id } as Ticket);
     }
 
     await batch.commit();
@@ -317,7 +347,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
   }
 }
 
-// Device management functions remain the same...
+// Device management
 export async function addDevice(device: Omit<Device, 'id'>): Promise<string> {
   try {
     if (!auth.currentUser) throw new Error('User not authenticated');
@@ -385,73 +415,37 @@ export async function getDevices(): Promise<Device[]> {
     throw error;
   }
 }
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch, setDoc, getDoc } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
-import type { Ticket, Device, ActionPlan, ActionCause, EmailConfig, UserProfile } from '../types';
-import { nanoid } from 'nanoid';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBEon3bFk8y6I_oS1pYmLL5Ap3IxdIHvKI",
-  authDomain: "suividestickets.firebaseapp.com",
-  projectId: "suividestickets",
-  storageBucket: "suividestickets.appspot.com",
-  messagingSenderId: "595964409945",
-  appId: "1:595964409945:web:cbd0957eb6c8da450c5948"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-export const auth = getAuth(app);
-
-export const ticketsCollection = collection(db, 'tickets');
-export const devicesCollection = collection(db, 'devices');
-export const actionPlansCollection = collection(db, 'actionPlans');
-export const actionCausesCollection = collection(db, 'actionCauses');
-export const emailConfigCollection = collection(db, 'emailConfig');
-export const usersCollection = collection(db, 'users');
-
-export async function loginUser(email: string, password: string): Promise<User> {
+// Email configuration
+export async function saveEmailConfig(config: EmailConfig): Promise<void> {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
+    if (!auth.currentUser) throw new Error('User not authenticated');
+
+    const configRef = doc(emailConfigCollection, 'config');
+    await setDoc(configRef, {
+      ...config,
+      updatedAt: Timestamp.now(),
+      userId: auth.currentUser.uid
+    });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Error saving email config:', error);
     throw error;
   }
 }
 
-export async function logoutUser(): Promise<void> {
+export async function getEmailConfig(): Promise<EmailConfig | null> {
   try {
-    await signOut(auth);
-  } catch (error) {
-    console.error('Logout error:', error);
-    throw error;
-  }
-}
+    if (!auth.currentUser) throw new Error('User not authenticated');
 
-export async function getUserRole(userId: string): Promise<UserProfile | null> {
-  try {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (userDoc.exists()) {
-      return userDoc.data() as UserProfile;
+    const configRef = doc(emailConfigCollection, 'config');
+    const configDoc = await getDoc(configRef);
+    
+    if (configDoc.exists()) {
+      return configDoc.data() as EmailConfig;
     }
-    // If no role is set, create a default viewer role
-    const defaultProfile: UserProfile = {
-      email: auth.currentUser?.email || '',
-      role: 'viewer'
-    };
-    // Only set admin role for the specified email
-    if (auth.currentUser?.email === 'admin@sticket.ma') {
-      defaultProfile.role = 'admin';
-    }
-    await setDoc(doc(db, 'users', userId), defaultProfile);
-    return defaultProfile;
-  } catch (error) {
-    console.error('Error getting user role:', error);
     return null;
+  } catch (error) {
+    console.error('Error getting email config:', error);
+    throw error;
   }
 }
-
-// Rest of the firebase.ts file remains the same...
-// Include all the existing functions for tickets, devices, etc.
