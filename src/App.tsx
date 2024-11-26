@@ -1,5 +1,3 @@
-import ActionPlanButton from './components/ActionPlanButton';
-import ActionPlanModal from './components/ActionPlanModal';
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
 import { User } from 'firebase/auth';
@@ -45,7 +43,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [remainingTime, setRemainingTime] = useState(300);
-  const [showActionPlan, setShowActionPlan] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -75,33 +72,6 @@ function App() {
     }
   };
 
-  const calculateDailyStats = () => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const todayTickets = tickets.filter(
-      (ticket) => format(ticket.dateCreation, 'yyyy-MM-dd') === today
-    );
-
-    const stats: DailyStats = {
-      date: format(new Date(), 'd MMM', { locale: fr }),
-      total: todayTickets.length,
-      resolus: todayTickets.filter((t) => t.status === 'CLOTURE').length,
-      horsDelai: todayTickets.filter((t) => !t.delaiRespect).length,
-      reouvertures: todayTickets.filter((t) => t.reopened).length,
-    };
-
-    setDailyStats((prev) => {
-      const existing = prev.find((s) => s.date === stats.date);
-      if (existing) {
-        return prev.map((s) => (s.date === stats.date ? stats : s));
-      }
-      return [...prev, stats].slice(-7);
-    });
-  };
-
-  useEffect(() => {
-    calculateDailyStats();
-  }, [tickets]);
-
   const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
     if (!currentUser) {
       setShowAuthModal(true);
@@ -119,17 +89,6 @@ function App() {
     } catch (error) {
       console.error('Error adding ticket:', error);
       alert('Failed to add ticket. Please try again.');
-    }
-  };
-
-  const handleImportTickets = async (importedTickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
-    try {
-      await addMultipleTickets(importedTickets);
-      await loadTickets();
-      setShowExcelImport(false);
-    } catch (error) {
-      console.error('Error importing tickets:', error);
-      alert('Failed to import tickets. Please try again.');
     }
   };
 
@@ -344,20 +303,6 @@ function App() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="bg-white dark:bg-dark rounded-lg shadow-sm p-4 flex items-center justify-between transition-colors duration-300">
-          <div className="flex items-center">
-            <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
-            <span className="text-lg font-medium text-gray-900 dark:text-white">
-              {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-            </span>
-          </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Semaine {format(new Date(), 'w', { locale: fr })}
-          </div>
-        </div>
-      </div>
-
       <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
         {showYearlyTimeline ? (
           <YearlyTimeline tickets={tickets} />
@@ -385,8 +330,12 @@ function App() {
             <div className="grid grid-cols-1 gap-8">
               <CauseTypeChart tickets={tickets} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <TicketForm onSubmit={handleNewTicket} />
-                <Dashboard dailyStats={dailyStats} />
+                <div className="lg:col-span-2">
+                  <TicketForm onSubmit={handleNewTicket} />
+                </div>
+                <div className="lg:col-span-2">
+                  <Dashboard dailyStats={dailyStats} />
+                </div>
               </div>
             </div>
           </div>
@@ -406,12 +355,6 @@ function App() {
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
-      <ActionPlanButton onClick={() => setShowActionPlan(true)} />
-      <ActionPlanModal 
-        isOpen={showActionPlan}
-        onClose={() => setShowActionPlan(false)}
-        tickets={tickets}
-      />
       <ThemeToggle />
     </div>
   );
