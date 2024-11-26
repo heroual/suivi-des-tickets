@@ -374,5 +374,64 @@ function App() {
     </div>
   );
 }
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
+import { User } from 'firebase/auth';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import TicketForm from './components/TicketForm';
+import AllTickets from './components/AllTickets';
+import Dashboard from './components/Dashboard';
+import CauseTypeChart from './components/CauseTypeChart';
+import MonthlyStats from './components/MonthlyStats';
+import MonthlyIndicators from './components/MonthlyIndicators';
+import AppInfo from './components/AppInfo';
+import PKIDisplay from './components/PKIDisplay';
+import PKICalculator from './components/PKICalculator';
+import AuthModal from './components/AuthModal';
+import ExcelImport from './components/ExcelImport';
+import CriticalCableTickets from './components/CriticalCableTickets';
+import Documentation from './components/Documentation';
+import Analytics from './components/Analytics';
+import DeviceManagement from './components/DeviceManagement';
+import AutoSignoutAlert from './components/AutoSignoutAlert';
+import ActionPlan from './components/ActionPlan';
+import YearlyTimeline from './components/YearlyTimeline';
+import ThemeToggle from './components/ThemeToggle';
+import CausesIdentifier from './components/CausesIdentifier';
+import ActionPlanFloatingButton from './components/ActionPlanFloatingButton';
+import Footer from './components/Footer';
+import type { Ticket, DailyStats } from './types';
+import { calculatePKI } from './utils/pki';
+import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
 
+function App() {
+  // ... existing code remains the same until the return statement ...
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-dark-50 pb-safe-bottom transition-colors duration-300 flex flex-col">
+      {/* ... existing header and main content ... */}
+
+      <Footer />
+
+      <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
+      <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
+      <ExcelImport 
+        isOpen={showExcelImport} 
+        onClose={() => setShowExcelImport(false)}
+        onImport={handleImportTickets}
+      />
+      <Documentation 
+        isOpen={showDocumentation} 
+        onClose={() => setShowDocumentation(false)} 
+      />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
+      <ThemeToggle />
+      <ActionPlanFloatingButton onClick={() => setShowActionPlan(!showActionPlan)} />
+    </div>
+  );
+}
+
+export default App;
 export default App;
