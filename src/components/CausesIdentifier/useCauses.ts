@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { nanoid } from 'nanoid';
 import type { Cause } from './types';
 import { filterCauses } from './utils';
 
@@ -66,16 +67,54 @@ const initialCauses: Cause[] = [
 ];
 
 export default function useCauses() {
+  const [causes, setCauses] = useState<Cause[]>(initialCauses);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCause, setSelectedCause] = useState<Cause | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingCause, setEditingCause] = useState<Cause | null>(null);
 
-  const filteredCauses = filterCauses(initialCauses, searchQuery);
+  const filteredCauses = filterCauses(causes, searchQuery);
+
+  const handleAddCause = (causeData: Omit<Cause, 'id'>) => {
+    const newCause: Cause = {
+      ...causeData,
+      id: nanoid()
+    };
+    setCauses(prev => [...prev, newCause]);
+    setShowForm(false);
+  };
+
+  const handleUpdateCause = (causeData: Omit<Cause, 'id'>) => {
+    if (!editingCause) return;
+    
+    setCauses(prev => prev.map(cause => 
+      cause.id === editingCause.id ? { ...causeData, id: cause.id } : cause
+    ));
+    setShowForm(false);
+    setEditingCause(null);
+  };
+
+  const handleDeleteCause = (id: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette cause ?')) {
+      setCauses(prev => prev.filter(cause => cause.id !== id));
+      if (selectedCause?.id === id) {
+        setSelectedCause(null);
+      }
+    }
+  };
 
   return {
     searchQuery,
     setSearchQuery,
     selectedCause,
     setSelectedCause,
-    filteredCauses
+    filteredCauses,
+    showForm,
+    setShowForm,
+    editingCause,
+    setEditingCause,
+    handleAddCause,
+    handleUpdateCause,
+    handleDeleteCause
   };
 }

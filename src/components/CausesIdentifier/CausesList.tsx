@@ -7,9 +7,17 @@ interface CausesListProps {
   causes: Cause[];
   selectedCause: Cause | null;
   onSelectCause: (cause: Cause | null) => void;
+  onEdit?: (cause: Cause) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function CausesList({ causes, selectedCause, onSelectCause }: CausesListProps) {
+export default function CausesList({ 
+  causes, 
+  selectedCause, 
+  onSelectCause,
+  onEdit,
+  onDelete 
+}: CausesListProps) {
   if (causes.length === 0) {
     return (
       <div className="text-center py-8">
@@ -27,6 +35,8 @@ export default function CausesList({ causes, selectedCause, onSelectCause }: Cau
           cause={cause}
           isSelected={selectedCause?.id === cause.id}
           onClick={() => onSelectCause(cause.id === selectedCause?.id ? null : cause)}
+          onEdit={onEdit ? () => onEdit(cause) : undefined}
+          onDelete={onDelete ? () => onDelete(cause.id) : undefined}
         />
       ))}
     </div>

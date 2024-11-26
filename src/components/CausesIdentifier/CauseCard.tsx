@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Edit2, Trash2 } from 'lucide-react';
 import type { Cause } from './types';
 import { getCauseTypeStyles } from './utils';
 
@@ -7,9 +7,11 @@ interface CauseCardProps {
   cause: Cause;
   isSelected: boolean;
   onClick: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export default function CauseCard({ cause, isSelected, onClick }: CauseCardProps) {
+export default function CauseCard({ cause, isSelected, onClick, onEdit, onDelete }: CauseCardProps) {
   const { bgColor, badgeColor, iconColor } = getCauseTypeStyles(cause.type);
 
   return (
@@ -25,13 +27,37 @@ export default function CauseCard({ cause, isSelected, onClick }: CauseCardProps
         <span className={`px-3 py-1 rounded-full text-sm font-medium ${badgeColor}`}>
           {cause.type}
         </span>
-        {cause.type === 'Technique' ? (
-          <AlertTriangle className={`w-5 h-5 ${iconColor}`} />
-        ) : cause.type === 'Casse' ? (
-          <AlertTriangle className={`w-5 h-5 ${iconColor}`} />
-        ) : (
-          <CheckCircle className={`w-5 h-5 ${iconColor}`} />
-        )}
+        <div className="flex items-center space-x-2">
+          {onEdit && onDelete && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="p-1 hover:bg-white/50 rounded-full transition-colors"
+              >
+                <Edit2 className="w-4 h-4 text-blue-600" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1 hover:bg-white/50 rounded-full transition-colors"
+              >
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </button>
+            </>
+          )}
+          {cause.type === 'Technique' ? (
+            <AlertTriangle className={`w-5 h-5 ${iconColor}`} />
+          ) : cause.type === 'Casse' ? (
+            <AlertTriangle className={`w-5 h-5 ${iconColor}`} />
+          ) : (
+            <CheckCircle className={`w-5 h-5 ${iconColor}`} />
+          )}
+        </div>
       </div>
 
       <h3 className="font-semibold text-gray-900 mb-2">{cause.description}</h3>
