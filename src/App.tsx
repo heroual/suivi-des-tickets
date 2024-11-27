@@ -3,6 +3,7 @@ import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, Hist
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAutoSignout } from './hooks/useAutoSignout';
 
 // Components
 import TicketForm from './components/TicketForm';
@@ -50,10 +51,12 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [remainingTime, setRemainingTime] = useState(300);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
+
+  // Auto-signout hook
+  const remainingTime = useAutoSignout();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -240,7 +243,7 @@ export default function App() {
         onClose={() => setShowDocumentation(false)} 
       />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
+      {currentUser && <AutoSignoutAlert remainingTime={Math.floor(remainingTime / 1000)} />}
       <ThemeToggle />
       <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
       <FeedbackModal

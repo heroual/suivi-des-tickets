@@ -72,37 +72,6 @@ export default {
             },
           },
         },
-        dark: {
-          css: {
-            color: '#D1D5DB',
-            h1: {
-              color: '#F9FAFB',
-            },
-            h2: {
-              color: '#F3F4F6',
-            },
-            h3: {
-              color: '#E5E7EB',
-            },
-            strong: {
-              color: '#F9FAFB',
-            },
-            a: {
-              color: '#60A5FA',
-              '&:hover': {
-                color: '#93C5FD',
-              },
-            },
-            code: {
-              color: '#F9FAFB',
-              backgroundColor: '#374151',
-            },
-            pre: {
-              backgroundColor: '#374151',
-              color: '#D1D5DB',
-            },
-          },
-        },
       },
       animation: {
         'slide-up': 'slideUp 0.3s ease-out',
