@@ -49,3 +49,25 @@ export interface User {
     description: string;
     roles: string[];
   }
+  export interface Technician {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: 'technician' | 'senior_technician' | 'supervisor';
+    status: 'active' | 'inactive';
+    assignedTickets?: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }
+  
+  export interface IncidentCause {
+    id: string;
+    name: string;
+    description: string;
+    severity: 'low' | 'medium' | 'high';
+    solutions: string[];
+    occurrences?: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }
