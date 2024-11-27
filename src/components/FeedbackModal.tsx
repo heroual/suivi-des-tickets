@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, ThumbsUp, Star } from 'lucide-react';
+import { X, Send, ThumbsUp, Star, MessageSquarePlus } from 'lucide-react';
 import { addFeedback } from '../services/firebase';
 import type { Feedback } from '../types';
 
