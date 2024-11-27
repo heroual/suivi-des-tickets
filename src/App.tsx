@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Info, Calculator, LogIn, LogOut, FileSpreadsheet, History, BookOpen, BarChart2, Router, Menu, X as CloseIcon, Calendar, Zap } from 'lucide-react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -30,13 +30,18 @@ import FeedbackList from './components/FeedbackList';
 import Footer from './components/Footer';
 import MainHeader from './components/MainHeader';
 import NavigationTabs from './components/NavigationTabs';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminDashboard from './components/admin/AdminDashboard';
+import UserManagement from './components/admin/users/UserManagement';
 
 // Types and Utils
 import type { Ticket, DailyStats, Feedback } from './types';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets, getFeedbacks } from './services/firebase';
+import { useAuth } from './hooks/useAuth';
 
 export default function App() {
+  const { isAdmin, isAuthenticated } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
@@ -136,7 +141,7 @@ export default function App() {
     );
   }
 
-  if (!currentUser) {
+  if (!isAuthenticated) {
     return <AuthModal isOpen={true} onClose={() => setShowAuthModal(false)} />;
   }
 
@@ -159,102 +164,117 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-dark-50 pb-safe-bottom transition-colors duration-300 flex flex-col">
-      <MainHeader onLogout={handleLogout} />
-      
-      <NavigationTabs
-        showAnalytics={showAnalytics}
-        showAllTickets={showAllTickets}
-        showDeviceManagement={showDeviceManagement}
-        showYearlyTimeline={showYearlyTimeline}
-        setShowAnalytics={setShowAnalytics}
-        setShowAllTickets={setShowAllTickets}
-        setShowDeviceManagement={setShowDeviceManagement}
-        setShowYearlyTimeline={setShowYearlyTimeline}
-        setShowExcelImport={setShowExcelImport}
-        setShowPKICalculator={setShowPKICalculator}
-        setShowDocumentation={setShowDocumentation}
-        setShowInfo={setShowInfo}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
-        {showYearlyTimeline ? (
-          <YearlyTimeline tickets={tickets} />
-        ) : showAnalytics ? (
-          <Analytics tickets={tickets} />
-        ) : showAllTickets ? (
-          <AllTickets tickets={tickets} />
-        ) : showDeviceManagement ? (
-          <DeviceManagement />
-        ) : (
-          <div className="space-y-8">
-            <PKIDisplay stats={pki} />
-            <MonthlyIndicators tickets={tickets} />
-            <div className="space-y-8">
-              <MonthlyStats tickets={tickets} />
-              <CriticalCableTickets 
-                tickets={tickets}
-                onAddTicket={handleNewTicket}
-                onUpdateTicket={updateTicket}
+      <Routes>
+        <Route
+          path="/admin/*"
+          element={
+            isAdmin ? (
+              <AdminLayout>
+                <Routes>
+                  <Route path="/" element={<AdminDashboard />} />
+                  <Route path="/users" element={<UserManagement />} />
+                  {/* Add other admin routes here */}
+                </Routes>
+              </AdminLayout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <>
+              <MainHeader onLogout={handleLogout} />
+              <NavigationTabs
+                showAnalytics={showAnalytics}
+                showAllTickets={showAllTickets}
+                showDeviceManagement={showDeviceManagement}
+                showYearlyTimeline={showYearlyTimeline}
+                setShowAnalytics={setShowAnalytics}
+                setShowAllTickets={setShowAllTickets}
+                setShowDeviceManagement={setShowDeviceManagement}
+                setShowYearlyTimeline={setShowYearlyTimeline}
+                setShowExcelImport={setShowExcelImport}
+                setShowPKICalculator={setShowPKICalculator}
+                setShowDocumentation={setShowDocumentation}
+                setShowInfo={setShowInfo}
               />
-            </div>
-            
-            <div className="grid grid-cols-1 gap-8">
-              <CauseTypeChart tickets={tickets} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="lg:col-span-2">
-                  <TicketForm onSubmit={handleNewTicket} />
-                </div>
-                <div className="lg:col-span-2">
-                  <Dashboard dailyStats={dailyStats} />
+
+              <main className="max-w-7xl mx-auto px-4 py-8 mb-20 sm:mb-6 space-y-8">
+                {/* Main content components */}
+                {showYearlyTimeline ? (
+                  <YearlyTimeline tickets={tickets} />
+                ) : showAnalytics ? (
+                  <Analytics tickets={tickets} />
+                ) : showAllTickets ? (
+                  <AllTickets tickets={tickets} />
+                ) : showDeviceManagement ? (
+                  <DeviceManagement />
+                ) : (
+                  <div className="space-y-8">
+                    <PKIDisplay stats={pki} />
+                    <MonthlyIndicators tickets={tickets} />
+                    <MonthlyStats tickets={tickets} />
+                    <CriticalCableTickets 
+                      tickets={tickets}
+                      onAddTicket={handleNewTicket}
+                      onUpdateTicket={updateTicket}
+                    />
+                    <CauseTypeChart tickets={tickets} />
+                    <TicketForm onSubmit={handleNewTicket} />
+                    <Dashboard dailyStats={dailyStats} />
+                  </div>
+                )}
+              </main>
+
+              <div className="max-w-7xl mx-auto px-4 mb-20">
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Feedbacks et Suggestions</h2>
+                  <FeedbackList 
+                    feedbacks={feedbacks} 
+                    onEdit={(feedback) => {
+                      setEditingFeedback(feedback);
+                      setShowFeedbackModal(true);
+                    }}
+                    onDelete={async (id) => {
+                      await loadFeedbacks();
+                    }}
+                  />
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-      </main>
 
-      <div className="max-w-7xl mx-auto px-4 mb-20">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Feedbacks et Suggestions</h2>
-          <FeedbackList 
-            feedbacks={feedbacks} 
-            onEdit={(feedback) => {
-              setEditingFeedback(feedback);
-              setShowFeedbackModal(true);
-            }}
-            onDelete={async (id) => {
-              await loadFeedbacks();
-            }}
-          />
-        </div>
-      </div>
+              <Footer />
 
-      <Footer />
-
-      <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
-      <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
-      <ExcelImport 
-        isOpen={showExcelImport} 
-        onClose={() => setShowExcelImport(false)}
-        onImport={addMultipleTickets}
-      />
-      <Documentation 
-        isOpen={showDocumentation} 
-        onClose={() => setShowDocumentation(false)} 
-      />
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      {currentUser && <AutoSignoutAlert remainingTime={Math.floor(remainingTime / 1000)} />}
-      <ThemeToggle />
-      <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
-      <FeedbackModal
-        isOpen={showFeedbackModal}
-        onClose={() => {
-          setShowFeedbackModal(false);
-          setEditingFeedback(null);
-        }}
-        onSubmit={loadFeedbacks}
-        initialData={editingFeedback}
-      />
+              {/* Modals */}
+              <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
+              <PKICalculator isOpen={showPKICalculator} onClose={() => setShowPKICalculator(false)} />
+              <ExcelImport 
+                isOpen={showExcelImport} 
+                onClose={() => setShowExcelImport(false)}
+                onImport={addMultipleTickets}
+              />
+              <Documentation 
+                isOpen={showDocumentation} 
+                onClose={() => setShowDocumentation(false)} 
+              />
+              <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+              {currentUser && <AutoSignoutAlert remainingTime={Math.floor(remainingTime / 1000)} />}
+              <ThemeToggle />
+              <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
+              <FeedbackModal
+                isOpen={showFeedbackModal}
+                onClose={() => {
+                  setShowFeedbackModal(false);
+                  setEditingFeedback(null);
+                }}
+                onSubmit={loadFeedbacks}
+                initialData={editingFeedback}
+              />
+            </>
+          }
+        />
+      </Routes>
     </div>
   );
 }
