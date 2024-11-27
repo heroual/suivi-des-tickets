@@ -7,3 +7,4 @@ export const actionPlansCollection = collection(db, 'actionPlans');
 export const actionCausesCollection = collection(db, 'actionCauses');
 export const emailConfigCollection = collection(db, 'emailConfig');
 export const usersCollection = collection(db, 'users');
+export const feedbackCollection = collection(db, 'feedback');
