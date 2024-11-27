@@ -21,19 +21,19 @@ import Documentation from './components/Documentation';
 import Analytics from './components/Analytics';
 import DeviceManagement from './components/DeviceManagement';
 import AutoSignoutAlert from './components/AutoSignoutAlert';
-import ActionPlan from './components/ActionPlan';
 import YearlyTimeline from './components/YearlyTimeline';
 import ThemeToggle from './components/ThemeToggle';
-import CausesIdentifier from './components/CausesIdentifier';
-import ActionPlanFloatingButton from './components/ActionPlanFloatingButton';
+import FeedbackButton from './components/FeedbackButton';
+import FeedbackModal from './components/FeedbackModal';
+import FeedbackList from './components/FeedbackList';
 import Footer from './components/Footer';
 import MainHeader from './components/MainHeader';
 import NavigationTabs from './components/NavigationTabs';
 
 // Types and Utils
-import type { Ticket, DailyStats } from './types';
+import type { Ticket, DailyStats, Feedback } from './types';
 import { calculatePKI } from './utils/pki';
-import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';
+import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets, getFeedbacks } from './services/firebase';
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -47,11 +47,12 @@ function App() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
   const [showYearlyTimeline, setShowYearlyTimeline] = useState(false);
-  const [showActionPlan, setShowActionPlan] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [remainingTime, setRemainingTime] = useState(300);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -61,8 +62,10 @@ function App() {
       
       if (user) {
         loadTickets();
+        loadFeedbacks();
       } else {
         setTickets([]);
+        setFeedbacks([]);
       }
     });
 
@@ -78,6 +81,15 @@ function App() {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load tickets';
       setError(errorMessage);
       console.error('Error loading tickets:', error);
+    }
+  };
+
+  const loadFeedbacks = async () => {
+    try {
+      const loadedFeedbacks = await getFeedbacks();
+      setFeedbacks(loadedFeedbacks);
+    } catch (error) {
+      console.error('Error loading feedbacks:', error);
     }
   };
 
@@ -101,37 +113,12 @@ function App() {
     }
   };
 
-  const handleCloseTicket = async (id: string) => {
-    try {
-      const updateData = {
-        status: 'CLOTURE' as const,
-        dateCloture: new Date(),
-        delaiRespect: true,
-      };
-      await updateTicket(id, updateData);
-      await loadTickets();
-    } catch (error) {
-      console.error('Error closing ticket:', error);
-      alert('Failed to close ticket. Please try again.');
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await logoutUser();
     } catch (error) {
       console.error('Error logging out:', error);
       alert('Failed to log out. Please try again.');
-    }
-  };
-
-  const handleImportTickets = async (tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
-    try {
-      await addMultipleTickets(tickets);
-      await loadTickets();
-    } catch (error) {
-      console.error('Error importing tickets:', error);
-      alert('Failed to import tickets. Please try again.');
     }
   };
 
@@ -198,16 +185,13 @@ function App() {
           <div className="space-y-8">
             <PKIDisplay stats={pki} />
             <MonthlyIndicators tickets={tickets} />
-            <CausesIdentifier />
             <div className="space-y-8">
               <MonthlyStats tickets={tickets} />
               <CriticalCableTickets 
                 tickets={tickets}
                 onAddTicket={handleNewTicket}
                 onUpdateTicket={updateTicket}
-                onDeleteTicket={handleCloseTicket}
               />
-              {showActionPlan && <ActionPlan tickets={tickets} />}
             </div>
             
             <div className="grid grid-cols-1 gap-8">
@@ -225,6 +209,13 @@ function App() {
         )}
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 mb-20">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Feedbacks et Suggestions</h2>
+          <FeedbackList feedbacks={feedbacks} />
+        </div>
+      </div>
+
       <Footer />
 
       <AppInfo isOpen={showInfo} onClose={() => setShowInfo(false)} />
@@ -232,7 +223,7 @@ function App() {
       <ExcelImport 
         isOpen={showExcelImport} 
         onClose={() => setShowExcelImport(false)}
-        onImport={handleImportTickets}
+        onImport={addMultipleTickets}
       />
       <Documentation 
         isOpen={showDocumentation} 
@@ -241,7 +232,12 @@ function App() {
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {currentUser && <AutoSignoutAlert remainingTime={remainingTime} />}
       <ThemeToggle />
-      <ActionPlanFloatingButton onClick={() => setShowActionPlan(!showActionPlan)} />
+      <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={loadFeedbacks}
+      />
     </div>
   );
 }

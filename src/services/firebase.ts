@@ -449,3 +449,158 @@ export async function getEmailConfig(): Promise<EmailConfig | null> {
     throw error;
   }
 }
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, orderBy, writeBatch, setDoc, getDoc } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import type { Ticket, Device, ActionPlan, ActionCause, EmailConfig, UserProfile, Feedback } from '../types';
+import { nanoid } from 'nanoid';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBEon3bFk8y6I_oS1pYmLL5Ap3IxdIHvKI",
+  authDomain: "suividestickets.firebaseapp.com",
+  projectId: "suividestickets",
+  storageBucket: "suividestickets.appspot.com",
+  messagingSenderId: "595964409945",
+  appId: "1:595964409945:web:cbd0957eb6c8da450c5948"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+export const auth = getAuth(app);
+
+// Collections
+export const ticketsCollection = collection(db, 'tickets');
+export const devicesCollection = collection(db, 'devices');
+export const actionPlansCollection = collection(db, 'actionPlans');
+export const actionCausesCollection = collection(db, 'actionCauses');
+export const emailConfigCollection = collection(db, 'emailConfig');
+export const usersCollection = collection(db, 'users');
+export const feedbackCollection = collection(db, 'feedback');
+
+// Auth functions
+export async function loginUser(email: string, password: string): Promise<User> {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
+}
+
+export async function getUserRole(userId: string): Promise<UserProfile | null> {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return userDoc.data() as UserProfile;
+    }
+    const defaultProfile: UserProfile = {
+      email: auth.currentUser?.email || '',
+      role: auth.currentUser?.email === 'admin@sticket.ma' ? 'admin' : 'viewer'
+    };
+    await setDoc(doc(db, 'users', userId), defaultProfile);
+    return defaultProfile;
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return null;
+  }
+}
+
+// Tickets CRUD
+export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const docRef = await addDoc(ticketsCollection, {
+      ...ticket,
+      dateCreation: Timestamp.fromDate(ticket.dateCreation),
+      dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
+      createdAt: Timestamp.now(),
+      userId: auth.currentUser.uid,
+      imported: false
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding ticket:', error);
+    throw error;
+  }
+}
+
+export async function updateTicket(id: string, data: Partial<Ticket>): Promise<void> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const ticketRef = doc(db, 'tickets', id);
+    const updateData: Record<string, any> = {
+      ...data,
+      updatedAt: Timestamp.now(),
+      userId: auth.currentUser.uid
+    };
+    if (data.dateCreation) updateData.dateCreation = Timestamp.fromDate(data.dateCreation);
+    if (data.dateCloture) updateData.dateCloture = Timestamp.fromDate(data.dateCloture);
+    await updateDoc(ticketRef, updateData);
+  } catch (error) {
+    console.error('Error updating ticket:', error);
+    throw error;
+  }
+}
+
+export async function getTickets(): Promise<Ticket[]> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const q = query(ticketsCollection, orderBy('dateCreation', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        dateCreation: data.dateCreation.toDate(),
+        dateCloture: data.dateCloture?.toDate(),
+        imported: data.imported || false
+      } as Ticket;
+    });
+  } catch (error) {
+    console.error('Error getting tickets:', error);
+    throw error;
+  }
+}
+
+// Feedback functions
+export async function addFeedback(feedback: Omit<Feedback, 'id'>): Promise<string> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const docRef = await addDoc(feedbackCollection, {
+      ...feedback,
+      createdAt: Timestamp.fromDate(feedback.createdAt),
+      userId: auth.currentUser.uid
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding feedback:', error);
+    throw error;
+  }
+}
+
+export async function getFeedbacks(): Promise<Feedback[]> {
+  try {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const q = query(feedbackCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate()
+    } as Feedback));
+  } catch (error) {
+    console.error('Error getting feedbacks:', error);
+    throw error;
+  }
+}

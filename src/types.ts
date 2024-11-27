@@ -75,7 +75,7 @@ export interface ActionPlan {
 
 export interface ActionCause {
   id: string;
-  type: 'Technique' | 'Client' | 'Casse';
+  type: CauseType;
   description: string;
   frequency: number;
   impact: 'low' | 'medium' | 'high';
@@ -92,4 +92,14 @@ export interface EmailConfig {
   includeMetrics: boolean;
   includeCriticalTickets: boolean;
   includeFullReport: boolean;
+}
+
+export interface Feedback {
+  id: string;
+  type: 'suggestion' | 'improvement';
+  title: string;
+  description: string;
+  rating: number;
+  createdAt: Date;
+  userId?: string;
 }
