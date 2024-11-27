@@ -1,14 +1,32 @@
 import React from 'react';
-import { MessageSquare, ThumbsUp, Star, Calendar } from 'lucide-react';
+import { MessageSquare, ThumbsUp, Star, Calendar, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Feedback } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import { deleteFeedback } from '../services/firebase';
 
 interface FeedbackListProps {
   feedbacks: Feedback[];
+  onEdit?: (feedback: Feedback) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function FeedbackList({ feedbacks }: FeedbackListProps) {
+export default function FeedbackList({ feedbacks, onEdit, onDelete }: FeedbackListProps) {
+  const { isAdmin } = useAuth();
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce feedback ?')) return;
+    
+    try {
+      await deleteFeedback(id);
+      onDelete?.(id);
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      alert('Erreur lors de la suppression du feedback');
+    }
+  };
+
   if (feedbacks.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg shadow-sm">
@@ -42,15 +60,33 @@ export default function FeedbackList({ feedbacks }: FeedbackListProps) {
                 <p className="text-sm text-gray-500 mt-1">{feedback.description}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-1 text-yellow-400">
-              {[...Array(5)].map((_, index) => (
-                <Star
-                  key={index}
-                  className={`w-4 h-4 ${
-                    index < feedback.rating ? 'fill-current' : 'text-gray-300'
-                  }`}
-                />
-              ))}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1 text-yellow-400">
+                {[...Array(5)].map((_, index) => (
+                  <Star
+                    key={index}
+                    className={`w-4 h-4 ${
+                      index < feedback.rating ? 'fill-current' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => onEdit?.(feedback)}
+                    className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(feedback.id)}
+                    className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-500">

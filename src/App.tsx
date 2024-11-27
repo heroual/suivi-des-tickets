@@ -35,7 +35,7 @@ import type { Ticket, DailyStats, Feedback } from './types';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets, getFeedbacks } from './services/firebase';
 
-function App() {
+export default function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showInfo, setShowInfo] = useState(false);
@@ -53,6 +53,7 @@ function App() {
   const [remainingTime, setRemainingTime] = useState(300);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -212,7 +213,16 @@ function App() {
       <div className="max-w-7xl mx-auto px-4 mb-20">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Feedbacks et Suggestions</h2>
-          <FeedbackList feedbacks={feedbacks} />
+          <FeedbackList 
+            feedbacks={feedbacks} 
+            onEdit={(feedback) => {
+              setEditingFeedback(feedback);
+              setShowFeedbackModal(true);
+            }}
+            onDelete={async (id) => {
+              await loadFeedbacks();
+            }}
+          />
         </div>
       </div>
 
@@ -235,11 +245,13 @@ function App() {
       <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
       <FeedbackModal
         isOpen={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
+        onClose={() => {
+          setShowFeedbackModal(false);
+          setEditingFeedback(null);
+        }}
         onSubmit={loadFeedbacks}
+        initialData={editingFeedback}
       />
     </div>
   );
 }
-
-export default App;

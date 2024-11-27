@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send, ThumbsUp, Star, MessageSquarePlus } from 'lucide-react';
-import { addFeedback } from '../services/firebase';
+import { addFeedback, updateFeedback } from '../services/firebase';
 import type { Feedback } from '../types';
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: () => void;
+  initialData?: Feedback;
 }
 
-export default function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackModalProps) {
+export default function FeedbackModal({ isOpen, onClose, onSubmit, initialData }: FeedbackModalProps) {
   const [formData, setFormData] = useState({
     type: 'suggestion',
     title: '',
@@ -18,6 +19,17 @@ export default function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackMod
   });
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        type: initialData.type,
+        title: initialData.title,
+        description: initialData.description,
+        rating: initialData.rating
+      });
+    }
+  }, [initialData]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,10 +37,14 @@ export default function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackMod
     setSubmitting(true);
 
     try {
-      await addFeedback({
-        ...formData,
-        createdAt: new Date()
-      });
+      if (initialData) {
+        await updateFeedback(initialData.id, formData);
+      } else {
+        await addFeedback({
+          ...formData,
+          createdAt: new Date()
+        });
+      }
       onSubmit();
       onClose();
     } catch (error) {
@@ -46,7 +62,7 @@ export default function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackMod
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center">
               <MessageSquarePlus className="w-7 h-7 text-purple-600 mr-2" />
-              Votre Feedback
+              {initialData ? 'Modifier le Feedback' : 'Votre Feedback'}
             </h2>
             <button
               onClick={onClose}
@@ -155,7 +171,7 @@ export default function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackMod
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Envoyer
+                    {initialData ? 'Mettre à jour' : 'Envoyer'}
                   </>
                 )}
               </button>
