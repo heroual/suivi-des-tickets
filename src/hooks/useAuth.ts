@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { auth, getUserRole } from '../services/firebase';
+import { auth, getUserRole } from '../services/firebase/auth';
 import type { UserProfile } from '../types';
 
 export function useAuth() {

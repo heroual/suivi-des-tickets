@@ -3,6 +3,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './config';
 import type { UserProfile } from '../../types';
 
+export { auth };
+
 export async function loginUser(email: string, password: string): Promise<User> {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
