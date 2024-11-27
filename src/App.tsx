@@ -4,6 +4,7 @@ import { User } from 'firebase/auth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+// Components
 import TicketForm from './components/TicketForm';
 import AllTickets from './components/AllTickets';
 import Dashboard from './components/Dashboard';
@@ -29,6 +30,7 @@ import Footer from './components/Footer';
 import MainHeader from './components/MainHeader';
 import NavigationTabs from './components/NavigationTabs';
 
+// Types and Utils
 import type { Ticket, DailyStats } from './types';
 import { calculatePKI } from './utils/pki';
 import { addTicket, getTickets, updateTicket, auth, logoutUser, addMultipleTickets } from './services/firebase';

@@ -172,14 +172,6 @@ export default function ActionPlan({ tickets }: ActionPlanProps) {
     setEditingCause(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {error && (
@@ -248,7 +240,7 @@ export default function ActionPlan({ tickets }: ActionPlanProps) {
               )}
             </div>
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-gray-500" />
