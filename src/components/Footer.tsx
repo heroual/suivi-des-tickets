@@ -14,7 +14,7 @@ export default function Footer() {
   return (
     <footer className="bg-white dark:bg-dark border-t border-gray-200 dark:border-dark-100 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -37,8 +37,8 @@ export default function Footer() {
           </div>
 
           {/* Contact Info */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
               Contact
             </h3>
             <ul className="space-y-3">
@@ -62,8 +62,8 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
               Liens Rapides
             </h3>
             <ul className="space-y-3">
@@ -94,8 +94,8 @@ export default function Footer() {
           </div>
 
           {/* Support */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
               Support
             </h3>
             <ul className="space-y-3">
