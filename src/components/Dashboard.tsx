@@ -7,6 +7,7 @@ import CriticalCableTickets from './CriticalCableTickets';
 import ActionPlan from './ActionPlan';
 import MonthlyStats from './MonthlyStats';
 import TicketForm from './TicketForm';
+import DateBar from './DateBar';
 import DashboardStats from './Dashboard';
 import CauseTypeChart from './CauseTypeChart';
 import type { Ticket } from '../types';
@@ -91,8 +92,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <DateBar />
       <PKIDisplay stats={pki} />
       <MonthlyIndicators tickets={tickets} />
+      <MonthlyStats tickets={tickets} />
       <CausesSuggestions tickets={tickets} />
       
       <div className="space-y-6">
@@ -106,7 +109,6 @@ export default function Dashboard() {
       </div>
       
       <div className="grid grid-cols-1 gap-6">
-        <MonthlyStats tickets={tickets} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TicketForm onSubmit={handleNewTicket} />
           <CauseTypeChart tickets={tickets} />
