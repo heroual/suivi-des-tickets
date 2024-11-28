@@ -1,37 +1,54 @@
-import React, { useState } from 'react';
-import Footer from '../Footer';
-import FeedbackSection from '../FeedbackSection';
-import FeedbackButton from '../FeedbackButton';
-import FeedbackModal from '../FeedbackModal';
+import React, { useState, useEffect } from 'react';
+import PKIDisplay from './PKIDisplay';
+import MonthlyIndicators from './MonthlyIndicators';
+import CausesSuggestions from './CausesSuggestions';
+import CriticalCableTickets from './CriticalCableTickets';
+import ActionPlan from './ActionPlan';
+import MonthlyStats from './MonthlyStats';
+import TicketForm from './TicketForm';
+import DateBar from './DateBar';
+import CauseTypeChart from './CauseTypeChart';
+import type { Ticket } from '../types';
+import { calculatePKI } from '../utils/pki';
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
+interface DashboardProps {
+  tickets: Ticket[];
+  onTicketsUpdate: () => Promise<void>;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+export default function Dashboard({ tickets, onTicketsUpdate }: DashboardProps) {
+  const pki = calculatePKI(tickets);
+
+  const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
+    try {
+      await onTicketsUpdate();
+    } catch (error) {
+      console.error('Error adding ticket:', error);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-dark-50">
-      <main className="flex-grow">
-        {children}
-      </main>
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <FeedbackSection />
+    <div className="space-y-6">
+      <DateBar />
+      <PKIDisplay stats={pki} />
+      <MonthlyIndicators tickets={tickets} />
+      <MonthlyStats tickets={tickets} />
+      <CausesSuggestions tickets={tickets} />
+      
+      <div className="space-y-6">
+        <CriticalCableTickets 
+          tickets={tickets}
+          onAddTicket={handleNewTicket}
+          onUpdateTicket={onTicketsUpdate}
+          onDeleteTicket={onTicketsUpdate}
+        />
+        <ActionPlan tickets={tickets} />
       </div>
       
-      <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
-      
-      <FeedbackModal
-        isOpen={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-        onSubmit={() => {
-          setShowFeedbackModal(false);
-        }}
-      />
-
-      <Footer />
+      <div className="space-y-6">
+        <TicketForm onSubmit={handleNewTicket} />
+        <CauseTypeChart tickets={tickets} />
+      </div>
     </div>
   );
 }

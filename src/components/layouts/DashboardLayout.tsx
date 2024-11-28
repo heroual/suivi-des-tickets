@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Footer from '../Footer';
 import FeedbackSection from '../FeedbackSection';
 import FeedbackButton from '../FeedbackButton';
-import { useState } from 'react';
 import FeedbackModal from '../FeedbackModal';
 
 interface DashboardLayoutProps {
@@ -15,12 +14,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-dark-50">
       <main className="flex-grow">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          {children}
-        </div>
+        {children}
       </main>
 
-      <FeedbackSection />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <FeedbackSection />
+      </div>
       
       <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
       
