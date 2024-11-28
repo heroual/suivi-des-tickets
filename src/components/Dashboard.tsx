@@ -108,11 +108,9 @@ export default function Dashboard() {
         <ActionPlan tickets={tickets} />
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TicketForm onSubmit={handleNewTicket} />
-          <CauseTypeChart tickets={tickets} />
-        </div>
+      <div className="space-y-6">
+        <TicketForm onSubmit={handleNewTicket} />
+        <CauseTypeChart tickets={tickets} />
       </div>
     </div>
   );
