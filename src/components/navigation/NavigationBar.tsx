@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info } from 'lucide-react';
+import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info, Moon, Sun, HelpCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../../hooks/useTheme';
 
 interface NavigationBarProps {
   onImportClick?: () => void;
@@ -17,6 +18,7 @@ export default function NavigationBar({
 }: NavigationBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isDark, toggle } = useTheme();
 
   const navigationItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -91,6 +93,31 @@ export default function NavigationBar({
                 );
               })}
             </div>
+
+            {/* Right side buttons */}
+            <div className="flex items-center space-x-4">
+              {/* Support/Help Button */}
+              <button
+                className="flex items-center px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+                onClick={() => window.open('mailto:support@stickets.ma', '_blank')}
+              >
+                <HelpCircle className="w-5 h-5 mr-2" />
+                <span>Support</span>
+              </button>
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggle}
+                className="p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -136,6 +163,28 @@ export default function NavigationBar({
               </button>
             );
           })}
+
+          {/* Mobile Support and Dark Mode */}
+          <div className="flex items-center justify-between px-3 py-2">
+            <button
+              onClick={() => window.open('mailto:support@stickets.ma', '_blank')}
+              className="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              <HelpCircle className="w-5 h-5 mr-2" />
+              Support
+            </button>
+            <button
+              onClick={toggle}
+              className="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5 mr-2" />
+              ) : (
+                <Moon className="w-5 h-5 mr-2" />
+              )}
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
+          </div>
         </div>
       </div>
     </nav>
