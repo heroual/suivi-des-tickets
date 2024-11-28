@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import NavigationItem from './NavigationItem';
-import { useAuth } from '../../hooks/useAuth';
+import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function NavigationBar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { isAdmin } = useAuth();
 
   const navigationItems = [
-    { label: 'Dashboard', path: '/', icon: 'LayoutDashboard' },
-    { label: 'Analytics', path: '/analytics', icon: 'BarChart2' },
-    { label: 'Tickets', path: '/tickets', icon: 'Ticket' },
-    { label: 'Équipements', path: '/devices', icon: 'Router' },
-    { label: 'Timeline', path: '/timeline', icon: 'Calendar' },
-    ...(isAdmin ? [{ label: 'Administration', path: '/admin', icon: 'Settings' }] : [])
+    { label: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { label: 'Analytics', path: '/analytics', icon: BarChart2 },
+    { label: 'Historique', path: '/history', icon: History },
+    { label: 'Équipements', path: '/devices', icon: Router },
+    { label: 'Timeline', path: '/timeline', icon: Calendar },
+    { label: 'Import', path: '/import', icon: FileSpreadsheet },
+    { label: 'PKI Calculator', path: '/pki', icon: Calculator },
+    { label: 'Documentation', path: '/docs', icon: BookOpen },
+    { label: 'Info', path: '/info', icon: Info }
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 shadow-xl mb-6 transition-all duration-300">
+    <nav className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-xl mb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between h-16">
           {/* Mobile menu button */}
@@ -40,14 +40,26 @@ export default function NavigationBar() {
 
           {/* Desktop menu */}
           <div className="hidden sm:flex sm:items-center sm:justify-between sm:w-full">
-            <div className="flex items-center space-x-4">
-              {navigationItems.map((item) => (
-                <NavigationItem
-                  key={item.path}
-                  {...item}
-                  isActive={location.pathname === item.path}
-                />
-              ))}
+            <div className="flex items-center space-x-4 overflow-x-auto scrollbar-hide">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path || 
+                  (item.path === '/' && location.pathname === '/');
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                      isActive
+                        ? 'bg-white text-blue-900 shadow-lg transform scale-105'
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-2" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -56,14 +68,26 @@ export default function NavigationBar() {
       {/* Mobile menu */}
       <div className={`sm:hidden ${isOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1">
-          {navigationItems.map((item) => (
-            <NavigationItem
-              key={item.path}
-              {...item}
-              isActive={location.pathname === item.path}
-              isMobile
-            />
-          ))}
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path || 
+              (item.path === '/' && location.pathname === '/');
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive
+                    ? 'bg-blue-700 text-white'
+                    : 'text-white hover:bg-blue-700 hover:text-white'
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </nav>
