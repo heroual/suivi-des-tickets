@@ -1,20 +1,8 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Github, Linkedin, Twitter, ExternalLink } from 'lucide-react';
-import GuideModal from './modals/GuideModal';
-import TermsModal from './modals/TermsModal';
-import PrivacyModal from './modals/PrivacyModal';
+import React from 'react';
+import { Mail, Phone, MapPin, Github, Linkedin, Twitter } from 'lucide-react';
 
 export default function Footer() {
-  const [showGuide, setShowGuide] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
-
-  const handleNavigation = (section: string) => {
-    const element = document.getElementById(section);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-white dark:bg-dark border-t border-gray-200 dark:border-dark-100 mt-auto">
@@ -29,49 +17,16 @@ export default function Footer() {
               Plateforme intelligente de gestion des interventions techniques pour la Direction Régionale d'Agadir - Secteur Taroudant.
             </p>
             <div className="flex space-x-4">
-              <a href="https://github.com/heroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+              <a href="https://github.com/heroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <Github className="w-5 h-5" />
               </a>
-              <a href="https://linkedin.com/in/elheroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+              <a href="https://linkedin.com/in/elheroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <Linkedin className="w-5 h-5" />
               </a>
-              <a href="https://twitter.com/elheroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+              <a href="https://twitter.com/elheroual" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <Twitter className="w-5 h-5" />
               </a>
             </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
-              Liens Rapides
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <button onClick={() => handleNavigation('dashboard')} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm flex items-center">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Dashboard
-                </button>
-              </li>
-              <li>
-                <button onClick={() => handleNavigation('tickets')} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm flex items-center">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Tickets
-                </button>
-              </li>
-              <li>
-                <button onClick={() => handleNavigation('analytics')} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm flex items-center">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Analytics
-                </button>
-              </li>
-              <li>
-                <button onClick={() => handleNavigation('documentation')} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm flex items-center">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Documentation
-                </button>
-              </li>
-            </ul>
           </div>
 
           {/* Contact Info */}
@@ -99,6 +54,35 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+              Liens Rapides
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <a href="#dashboard" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <a href="#tickets" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                  Tickets
+                </a>
+              </li>
+              <li>
+                <a href="#analytics" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                  Analytics
+                </a>
+              </li>
+              <li>
+                <a href="#documentation" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                  Documentation
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* Support */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
@@ -106,51 +90,33 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <button
-                  onClick={() => setShowGuide(true)}
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
-                >
+                <a href="#guide" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
                   Guide d'utilisation
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => setShowTerms(true)}
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
-                >
+                <a href="#terms" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
                   Conditions d'utilisation
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => setShowPrivacy(true)}
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
-                >
+                <a href="#privacy" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
                   Politique de confidentialité
-                </button>
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-dark-100">
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              © {new Date().getFullYear()} STickets SAV Taroudant. Tous droits réservés.
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>© {currentYear} STickets SAV Taroudant. Tous droits réservés.</p>
+            <p className="mt-2">
+              Développé avec ❤️ par Ing. Salah Eddine ELHEROUAL
             </p>
-            <div className="mt-4 sm:mt-0">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Développé avec ❤️ par Ing. Salah Eddine ELHEROUAL
-              </p>
-            </div>
           </div>
         </div>
       </div>
-
-      <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
-      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
-      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </footer>
   );
 }
