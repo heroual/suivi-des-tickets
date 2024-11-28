@@ -2,7 +2,19 @@ import React, { useState } from 'react';
 import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function NavigationBar() {
+interface NavigationBarProps {
+  onImportClick?: () => void;
+  onPKIClick?: () => void;
+  onDocsClick?: () => void;
+  onInfoClick?: () => void;
+}
+
+export default function NavigationBar({ 
+  onImportClick,
+  onPKIClick,
+  onDocsClick,
+  onInfoClick
+}: NavigationBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -11,11 +23,14 @@ export default function NavigationBar() {
     { label: 'Analytics', path: '/analytics', icon: BarChart2 },
     { label: 'Historique', path: '/history', icon: History },
     { label: 'Équipements', path: '/devices', icon: Router },
-    { label: 'Timeline', path: '/timeline', icon: Calendar },
-    { label: 'Import', path: '/import', icon: FileSpreadsheet },
-    { label: 'PKI Calculator', path: '/pki', icon: Calculator },
-    { label: 'Documentation', path: '/docs', icon: BookOpen },
-    { label: 'Info', path: '/info', icon: Info }
+    { label: 'Timeline', path: '/timeline', icon: Calendar }
+  ];
+
+  const modalItems = [
+    { label: 'Import', icon: FileSpreadsheet, onClick: onImportClick },
+    { label: 'PKI Calculator', icon: Calculator, onClick: onPKIClick },
+    { label: 'Documentation', icon: BookOpen, onClick: onDocsClick },
+    { label: 'Info', icon: Info, onClick: onInfoClick }
   ];
 
   return (
@@ -60,6 +75,21 @@ export default function NavigationBar() {
                   </Link>
                 );
               })}
+
+              {/* Modal Triggers */}
+              {modalItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.label}
+                    onClick={item.onClick}
+                    className="flex items-center px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
+                  >
+                    <Icon className="w-5 h-5 mr-2" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -86,6 +116,24 @@ export default function NavigationBar() {
                 <Icon className="w-5 h-5 mr-3" />
                 {item.label}
               </Link>
+            );
+          })}
+
+          {/* Mobile Modal Triggers */}
+          {modalItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.label}
+                onClick={() => {
+                  item.onClick?.();
+                  setIsOpen(false);
+                }}
+                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 hover:text-white w-full"
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </button>
             );
           })}
         </div>
