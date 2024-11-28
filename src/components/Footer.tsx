@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Github, Linkedin, Twitter } from 'lucide-react';
+import GuideModal from './modals/GuideModal';
+import TermsModal from './modals/TermsModal';
+import PrivacyModal from './modals/PrivacyModal';
 
 export default function Footer() {
+  const [showGuide, setShowGuide] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  
   const currentYear = new Date().getFullYear();
 
   return (
@@ -76,9 +83,12 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#documentation" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
-                  Documentation
-                </a>
+                <button 
+                  onClick={() => setShowGuide(true)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600"
+                >
+                  Guide d'utilisation
+                </button>
               </li>
             </ul>
           </div>
@@ -90,19 +100,20 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <a href="#guide" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
-                  Guide d'utilisation
-                </a>
-              </li>
-              <li>
-                <a href="#terms" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                <button 
+                  onClick={() => setShowTerms(true)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600"
+                >
                   Conditions d'utilisation
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#privacy" className="text-gray-600 dark:text-gray-400 hover:text-blue-600">
+                <button 
+                  onClick={() => setShowPrivacy(true)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600"
+                >
                   Politique de confidentialité
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -117,6 +128,11 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </footer>
   );
 }

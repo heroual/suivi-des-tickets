@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, BookOpen, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { BookOpen, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import BaseModal from './BaseModal';
 
 interface GuideModalProps {
