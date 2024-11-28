@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info, Moon, Sun, HelpCircle } from 'lucide-react';
+import { Menu, X, LayoutDashboard, BarChart2, History, Router, Calendar, FileSpreadsheet, Calculator, BookOpen, Info, Moon, Sun } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -30,9 +30,7 @@ export default function NavigationBar({
 
   const modalItems = [
     { label: 'Import', icon: FileSpreadsheet, onClick: onImportClick },
-    { label: 'PKI Calculator', icon: Calculator, onClick: onPKIClick },
-    { label: 'Documentation', icon: BookOpen, onClick: onDocsClick },
-    { label: 'Info', icon: Info, onClick: onInfoClick }
+    { label: 'PKI Calculator', icon: Calculator, onClick: onPKIClick }
   ];
 
   return (
@@ -95,21 +93,30 @@ export default function NavigationBar({
             </div>
 
             {/* Right side buttons */}
-            <div className="flex items-center space-x-4">
-              {/* Support/Help Button */}
+            <div className="flex items-center space-x-2">
+              {/* Documentation Button */}
               <button
-                className="flex items-center px-4 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
-                onClick={() => window.open('mailto:support@stickets.ma', '_blank')}
+                onClick={onDocsClick}
+                className="flex items-center px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+                title="Documentation"
               >
-                <HelpCircle className="w-5 h-5 mr-2" />
-                <span>Support</span>
+                <BookOpen className="w-5 h-5" />
+              </button>
+
+              {/* Info Button */}
+              <button
+                onClick={onInfoClick}
+                className="flex items-center px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+                title="Informations"
+              >
+                <Info className="w-5 h-5" />
               </button>
 
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggle}
-                className="p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
-                aria-label="Toggle dark mode"
+                className="flex items-center px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200"
+                title={isDark ? 'Mode clair' : 'Mode sombre'}
               >
                 {isDark ? (
                   <Sun className="w-5 h-5" />
@@ -164,25 +171,46 @@ export default function NavigationBar({
             );
           })}
 
-          {/* Mobile Support and Dark Mode */}
-          <div className="flex items-center justify-between px-3 py-2">
+          {/* Mobile Documentation and Info */}
+          <div className="border-t border-blue-700 pt-2 mt-2">
             <button
-              onClick={() => window.open('mailto:support@stickets.ma', '_blank')}
-              className="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+              onClick={() => {
+                onDocsClick?.();
+                setIsOpen(false);
+              }}
+              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 w-full"
             >
-              <HelpCircle className="w-5 h-5 mr-2" />
-              Support
+              <BookOpen className="w-5 h-5 mr-3" />
+              Documentation
             </button>
             <button
-              onClick={toggle}
-              className="flex items-center text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+              onClick={() => {
+                onInfoClick?.();
+                setIsOpen(false);
+              }}
+              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 w-full"
+            >
+              <Info className="w-5 h-5 mr-3" />
+              Informations
+            </button>
+            <button
+              onClick={() => {
+                toggle();
+                setIsOpen(false);
+              }}
+              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 w-full"
             >
               {isDark ? (
-                <Sun className="w-5 h-5 mr-2" />
+                <>
+                  <Sun className="w-5 h-5 mr-3" />
+                  Mode clair
+                </>
               ) : (
-                <Moon className="w-5 h-5 mr-2" />
+                <>
+                  <Moon className="w-5 h-5 mr-3" />
+                  Mode sombre
+                </>
               )}
-              {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
           </div>
         </div>
