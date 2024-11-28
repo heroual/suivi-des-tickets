@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Plus, Edit2, Trash2, X, Save, Filter, BarChart2, AlertTriangle } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { 
+  Lightbulb, 
+  Target,
+  Brain,
+  Network,
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  Save,
+  AlertTriangle,
+  BarChart2,
+  CheckCircle 
+} from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import type { Ticket, CauseType } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import AccessDeniedMessage from './AccessDeniedMessage';
 
 interface CausesSuggestionsProps {
   tickets: Ticket[];
@@ -18,6 +33,7 @@ interface CauseAnalysis {
 }
 
 export default function CausesSuggestions({ tickets }: CausesSuggestionsProps) {
+  const { isAdmin } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month'>('month');
   const [editingCause, setEditingCause] = useState<CauseAnalysis | null>(null);
@@ -100,6 +116,8 @@ export default function CausesSuggestions({ tickets }: CausesSuggestionsProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
+    
     // Handle form submission
     setShowForm(false);
     resetForm();
@@ -142,15 +160,19 @@ export default function CausesSuggestions({ tickets }: CausesSuggestionsProps) {
             <option value="month">Ce mois</option>
           </select>
           
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nouvelle Cause
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nouvelle Cause
+            </button>
+          )}
         </div>
       </div>
+
+      {!isAdmin && <AccessDeniedMessage />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
@@ -211,20 +233,22 @@ export default function CausesSuggestions({ tickets }: CausesSuggestionsProps) {
                       <p className="text-sm text-gray-600 mt-1">{cause.description}</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setEditingCause(cause);
-                        setShowForm(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-800">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setEditingCause(cause);
+                          setShowForm(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4">
@@ -254,7 +278,7 @@ export default function CausesSuggestions({ tickets }: CausesSuggestionsProps) {
       </div>
 
       {/* Form Modal */}
-      {showForm && (
+      {showForm && isAdmin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
             <div className="p-6">
