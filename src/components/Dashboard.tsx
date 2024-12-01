@@ -8,6 +8,7 @@ import MonthlyStats from './MonthlyStats';
 import TicketForm from './TicketForm';
 import DateBar from './DateBar';
 import CauseTypeChart from './CauseTypeChart';
+import { useFilteredTickets } from '../hooks/useFilteredTickets';
 import type { Ticket } from '../types';
 import { calculatePKI } from '../utils/pki';
 
@@ -17,7 +18,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ tickets, onTicketsUpdate }: DashboardProps) {
-  const pki = calculatePKI(tickets);
+  const filteredTickets = useFilteredTickets(tickets);
+  const pki = calculatePKI(filteredTickets);
 
   const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
     try {
@@ -31,23 +33,23 @@ export default function Dashboard({ tickets, onTicketsUpdate }: DashboardProps) 
     <div className="space-y-6">
       <DateBar />
       <PKIDisplay stats={pki} />
-      <MonthlyIndicators tickets={tickets} />
-      <MonthlyStats tickets={tickets} />
-      <CausesSuggestions tickets={tickets} />
+      <MonthlyIndicators tickets={filteredTickets} />
+      <MonthlyStats tickets={filteredTickets} />
+      <CausesSuggestions tickets={filteredTickets} />
       
       <div className="space-y-6">
         <CriticalCableTickets 
-          tickets={tickets}
+          tickets={filteredTickets}
           onAddTicket={handleNewTicket}
           onUpdateTicket={onTicketsUpdate}
           onDeleteTicket={onTicketsUpdate}
         />
-        <ActionPlan tickets={tickets} />
+        <ActionPlan tickets={filteredTickets} />
       </div>
       
       <div className="space-y-6">
         <TicketForm onSubmit={handleNewTicket} />
-        <CauseTypeChart tickets={tickets} />
+        <CauseTypeChart tickets={filteredTickets} />
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ import AppInfo from './components/AppInfo';
 import NavigationBar from './components/navigation/NavigationBar';
 import AutoSignoutAlert from './components/AutoSignoutAlert';
 import DashboardLayout from './components/layouts/DashboardLayout';
+import { DateProvider } from './contexts/DateContext';
 import { logoutUser } from './services/firebase';
 import type { Ticket } from './types';
 
@@ -57,55 +58,57 @@ export default function App() {
   }
 
   return (
-    <DashboardLayout>
-      <MainHeader onLogout={logoutUser} />
-      <NavigationBar 
-        onImportClick={() => setShowExcelImport(true)}
-        onPKIClick={() => setShowPKICalculator(true)}
-        onDocsClick={() => setShowDocumentation(true)}
-        onInfoClick={() => setShowInfo(true)}
-      />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Routes>
-          <Route path="/" element={<Dashboard tickets={tickets} onTicketsUpdate={loadTickets} />} />
-          <Route path="/analytics" element={<Analytics tickets={tickets} />} />
-          <Route path="/history" element={<AllTickets tickets={tickets} />} />
-          <Route path="/devices" element={<DeviceManagement />} />
-          <Route path="/timeline" element={<YearlyTimeline tickets={tickets} />} />
-        </Routes>
-      </div>
-
-      {showExcelImport && (
-        <ExcelImport 
-          isOpen={showExcelImport} 
-          onClose={() => setShowExcelImport(false)} 
-          onImport={loadTickets}
+    <DateProvider>
+      <DashboardLayout>
+        <MainHeader onLogout={logoutUser} />
+        <NavigationBar 
+          onImportClick={() => setShowExcelImport(true)}
+          onPKIClick={() => setShowPKICalculator(true)}
+          onDocsClick={() => setShowDocumentation(true)}
+          onInfoClick={() => setShowInfo(true)}
         />
-      )}
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Routes>
+            <Route path="/" element={<Dashboard tickets={tickets} onTicketsUpdate={loadTickets} />} />
+            <Route path="/analytics" element={<Analytics tickets={tickets} />} />
+            <Route path="/history" element={<AllTickets tickets={tickets} />} />
+            <Route path="/devices" element={<DeviceManagement />} />
+            <Route path="/timeline" element={<YearlyTimeline tickets={tickets} />} />
+          </Routes>
+        </div>
 
-      {showPKICalculator && (
-        <PKICalculator 
-          isOpen={showPKICalculator} 
-          onClose={() => setShowPKICalculator(false)} 
-        />
-      )}
+        {showExcelImport && (
+          <ExcelImport 
+            isOpen={showExcelImport} 
+            onClose={() => setShowExcelImport(false)} 
+            onImport={loadTickets}
+          />
+        )}
 
-      {showDocumentation && (
-        <Documentation 
-          isOpen={showDocumentation} 
-          onClose={() => setShowDocumentation(false)} 
-        />
-      )}
+        {showPKICalculator && (
+          <PKICalculator 
+            isOpen={showPKICalculator} 
+            onClose={() => setShowPKICalculator(false)} 
+          />
+        )}
 
-      {showInfo && (
-        <AppInfo 
-          isOpen={showInfo} 
-          onClose={() => setShowInfo(false)} 
-        />
-      )}
+        {showDocumentation && (
+          <Documentation 
+            isOpen={showDocumentation} 
+            onClose={() => setShowDocumentation(false)} 
+          />
+        )}
 
-      {remainingTime <= 60 && <AutoSignoutAlert remainingTime={remainingTime} />}
-    </DashboardLayout>
+        {showInfo && (
+          <AppInfo 
+            isOpen={showInfo} 
+            onClose={() => setShowInfo(false)} 
+          />
+        )}
+
+        {remainingTime <= 60 && <AutoSignoutAlert remainingTime={remainingTime} />}
+      </DashboardLayout>
+    </DateProvider>
   );
 }
