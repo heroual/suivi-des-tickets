@@ -7,6 +7,7 @@ import PKICalculator from './PKICalculator';
 import Documentation from './Documentation';
 import AppInfo from './AppInfo';
 import NavigationBar from './navigation/NavigationBar';
+import DateBar from './DateBar';
 import { calculatePKI } from '../utils/pki';
 import type { Ticket } from '../types';
 import PKIDisplay from './PKIDisplay';
@@ -16,6 +17,8 @@ import CriticalCableTickets from './CriticalCableTickets';
 import ActionPlan from './ActionPlan';
 import MonthlyStats from './MonthlyStats';
 import TicketForm from './TicketForm';
+import FeedbackButton from './FeedbackButton';
+import FeedbackModal from './FeedbackModal';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -24,6 +27,7 @@ export default function Dashboard() {
   const [showPKICalculator, setShowPKICalculator] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -69,6 +73,8 @@ export default function Dashboard() {
         onInfoClick={() => setShowInfo(true)}
       />
       
+      <DateBar />
+      
       <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <PKIDisplay stats={calculatePKI(tickets)} />
         <MonthlyIndicators tickets={tickets} />
@@ -89,6 +95,8 @@ export default function Dashboard() {
           <TicketForm onSubmit={handleNewTicket} />
         </div>
       </div>
+
+      <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
 
       {showExcelImport && (
         <ExcelImport 
@@ -118,6 +126,15 @@ export default function Dashboard() {
           onClose={() => setShowInfo(false)} 
         />
       )}
+
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={() => {
+          setShowFeedbackModal(false);
+          // Reload feedbacks if needed
+        }}
+      />
     </div>
   );
 }

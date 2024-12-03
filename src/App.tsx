@@ -10,10 +10,13 @@ import DeviceManagement from './components/DeviceManagement';
 import YearlyTimeline from './components/YearlyTimeline';
 import AutoSignoutAlert from './components/AutoSignoutAlert';
 import { DateProvider } from './contexts/DateContext';
+import DashboardLayout from './components/layouts/DashboardLayout';
+import { useTickets } from './hooks/useTickets';
 
 export default function App() {
   const { user, loading } = useAuth();
   const remainingTime = useAutoSignout();
+  const { tickets } = useTickets();
 
   if (loading) {
     return (
@@ -29,17 +32,17 @@ export default function App() {
 
   return (
     <DateProvider>
-      <div className="min-h-screen bg-gray-100">
+      <DashboardLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/history" element={<AllTickets tickets={[]} />} />
+          <Route path="/analytics" element={<Analytics tickets={tickets} />} />
+          <Route path="/history" element={<AllTickets tickets={tickets} />} />
           <Route path="/devices" element={<DeviceManagement />} />
-          <Route path="/timeline" element={<YearlyTimeline tickets={[]} />} />
+          <Route path="/timeline" element={<YearlyTimeline tickets={tickets} />} />
         </Routes>
 
         {remainingTime <= 60 && <AutoSignoutAlert remainingTime={remainingTime} />}
-      </div>
+      </DashboardLayout>
     </DateProvider>
   );
 }
