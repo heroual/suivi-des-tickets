@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import type { Ticket } from '../types';
+import type { Ticket, ServiceType, Technician, CauseType } from '../types';
 import { parse, format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import AccessDeniedMessage from './AccessDeniedMessage';
@@ -30,26 +30,80 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
 
   const parseDate = (dateStr: string) => {
     try {
+      // First try parsing with time
       return parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
-    } catch (error) {
-      throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
+    } catch {
+      try {
+        // If that fails, try parsing just the date
+        return parse(dateStr, 'dd/MM/yyyy', new Date());
+      } catch (error) {
+        throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm ou JJ/MM/AAAA`);
+      }
     }
   };
 
-  const validateTicket = (row: any): boolean => {
-    return (
-      row.ndLogin &&
-      ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'].includes(row.serviceType) &&
-      row.description &&
-      row.cause &&
-      ['Technique', 'Client', 'Casse'].includes(row.causeType) &&
-      ['BRAHIM', 'ABDERAHMAN', 'AXE'].includes(row.technician) &&
-      row.dateCreation &&
-      row.dateCloture &&
-      row.delaiRespect !== undefined &&
-      row.motifCloture &&
-      row.isReopened !== undefined
-    );
+  const validateServiceType = (value: string): ServiceType => {
+    const validTypes: ServiceType[] = ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'];
+    const normalized = value.toUpperCase();
+    if (validTypes.includes(normalized as ServiceType)) {
+      return normalized as ServiceType;
+    }
+    throw new Error(`Type de service invalide: ${value}. Valeurs acceptées: FIBRE, ADSL, DEGROUPAGE, FIXE`);
+  };
+
+  const validateTechnician = (value: string): Technician => {
+    const validTechnicians: Technician[] = ['BRAHIM', 'ABDERAHMAN', 'AXE'];
+    const normalized = value.toUpperCase();
+    if (validTechnicians.includes(normalized as Technician)) {
+      return normalized as Technician;
+    }
+    throw new Error(`Technicien invalide: ${value}. Valeurs acceptées: BRAHIM, ABDERAHMAN, AXE`);
+  };
+
+  const validateCauseType = (value: string): CauseType => {
+    const validTypes: CauseType[] = ['Technique', 'Client', 'Casse'];
+    if (validTypes.includes(value)) {
+      return value as CauseType;
+    }
+    throw new Error(`Type de cause invalide: ${value}. Valeurs acceptées: Technique, Client, Casse`);
+  };
+
+  const validateBoolean = (value: any): boolean => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.toLowerCase();
+      if (normalized === 'true' || normalized === 'oui' || normalized === '1') return true;
+      if (normalized === 'false' || normalized === 'non' || normalized === '0') return false;
+    }
+    if (typeof value === 'number') return value === 1;
+    throw new Error(`Valeur booléenne invalide: ${value}. Utilisez true/false, oui/non, ou 1/0`);
+  };
+
+  const validateTicket = (row: any, index: number): Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> => {
+    try {
+      if (!row['ND/Login'] || !row['Service'] || !row['Description'] || !row['Cause'] || 
+          !row['Type Cause'] || !row['Technicien'] || !row['Date Création']) {
+        throw new Error('Champs obligatoires manquants');
+      }
+
+      const ticket: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> = {
+        ndLogin: String(row['ND/Login']),
+        serviceType: validateServiceType(String(row['Service'])),
+        description: String(row['Description']),
+        cause: String(row['Cause']),
+        causeType: validateCauseType(String(row['Type Cause'])),
+        technician: validateTechnician(String(row['Technicien'])),
+        dateCreation: parseDate(String(row['Date Création'])),
+        dateCloture: row['Date Clôture'] ? parseDate(String(row['Date Clôture'])) : undefined,
+        status: row['Status']?.toUpperCase() === 'CLOTURE' ? 'CLOTURE' : 'EN_COURS',
+        delaiRespect: validateBoolean(row['Délai Respecté'] ?? true),
+        motifCloture: row['Motif Clôture'] ? String(row['Motif Clôture']) : ''
+      };
+
+      return ticket;
+    } catch (error) {
+      throw new Error(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de validation'}`);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,29 +123,11 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       const errors: string[] = [];
 
       jsonData.forEach((row: any, index) => {
-        if (!validateTicket(row)) {
-          errors.push(`Ligne ${index + 2}: Données invalides ou manquantes`);
-          return;
-        }
-
         try {
-          tickets.push({
-            ndLogin: row.ndLogin,
-            serviceType: row.serviceType,
-            description: row.description,
-            cause: row.cause,
-            causeType: row.causeType,
-            technician: row.technician,
-            dateCreation: parseDate(row.dateCreation),
-            dateCloture: parseDate(row.dateCloture),
-            status: 'CLOTURE',
-            delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
-            motifCloture: row.motifCloture,
-            reopened: row.isReopened === 'true' || row.isReopened === true,
-            reopenCount: row.isReopened === 'true' || row.isReopened === true ? 1 : 0
-          });
+          const ticket = validateTicket(row, index);
+          tickets.push(ticket);
         } catch (error) {
-          errors.push(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de format'}`);
+          errors.push(error instanceof Error ? error.message : `Ligne ${index + 2}: Erreur inconnue`);
         }
       });
 
@@ -111,7 +147,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         return;
       }
 
-      onImport(tickets);
+      await onImport(tickets);
       setStatus({
         type: 'success',
         message: `${tickets.length} tickets importés avec succès`,
@@ -132,30 +168,17 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const now = new Date();
     const template = [
       {
-        ndLogin: 'ND123456',
-        serviceType: 'FIBRE',
-        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
-        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
-        description: 'Problème de connexion',
-        cause: 'Coupure fibre',
-        causeType: 'Technique',
-        technician: 'BRAHIM',
-        delaiRespect: true,
-        motifCloture: 'Réparation effectuée',
-        isReopened: false
-      },
-      {
-        ndLogin: 'ND789012',
-        serviceType: 'FIXE',
-        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
-        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
-        description: 'Pas de tonalité',
-        cause: 'Problème ligne',
-        causeType: 'Technique',
-        technician: 'ABDERAHMAN',
-        delaiRespect: false,
-        motifCloture: 'Remplacement équipement',
-        isReopened: true
+        'ND/Login': 'ND123456',
+        'Service': 'FIBRE',
+        'Date Création': format(now, 'dd/MM/yyyy HH:mm'),
+        'Date Clôture': format(now, 'dd/MM/yyyy HH:mm'),
+        'Description': 'Problème de connexion',
+        'Cause': 'Coupure fibre',
+        'Type Cause': 'Technique',
+        'Technicien': 'BRAHIM',
+        'Délai Respecté': true,
+        'Status': 'CLOTURE',
+        'Motif Clôture': 'Réparation effectuée'
       }
     ];
 
@@ -163,41 +186,20 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
 
-    // Add data validations
-    ws['!datavalidation'] = {
-      B2: {
-        type: 'list',
-        operator: 'equal',
-        formula1: '"FIBRE,ADSL,DEGROUPAGE,FIXE"',
-        showErrorMessage: true,
-        error: 'Valeur invalide',
-        errorTitle: 'Erreur'
-      },
-      E2: {
-        type: 'list',
-        operator: 'equal',
-        formula1: '"Technique,Client,Casse"',
-        showErrorMessage: true,
-        error: 'Valeur invalide',
-        errorTitle: 'Erreur'
-      },
-      F2: {
-        type: 'list',
-        operator: 'equal',
-        formula1: '"BRAHIM,ABDERAHMAN,AXE"',
-        showErrorMessage: true,
-        error: 'Valeur invalide',
-        errorTitle: 'Erreur'
-      },
-      K2: {
-        type: 'list',
-        operator: 'equal',
-        formula1: '"true,false"',
-        showErrorMessage: true,
-        error: 'Valeur invalide',
-        errorTitle: 'Erreur'
-      }
-    };
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 15 }, // ND/Login
+      { wch: 10 }, // Service
+      { wch: 20 }, // Date Création
+      { wch: 20 }, // Date Clôture
+      { wch: 40 }, // Description
+      { wch: 30 }, // Cause
+      { wch: 15 }, // Type Cause
+      { wch: 15 }, // Technicien
+      { wch: 15 }, // Délai Respecté
+      { wch: 10 }, // Status
+      { wch: 30 }  // Motif Clôture
+    ];
 
     XLSX.writeFile(wb, 'template_tickets.xlsx');
   };
@@ -239,17 +241,17 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                 <div className="flex-shrink-0 bg-white p-4 rounded-lg shadow-sm">
                   <h4 className="font-medium text-gray-900 mb-2">Structure requise :</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• ndLogin (ex: ND123456)</li>
-                    <li>• serviceType (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
-                    <li>• dateCreation (format: JJ/MM/AAAA HH:mm)</li>
-                    <li>• dateCloture (format: JJ/MM/AAAA HH:mm)</li>
-                    <li>• description (texte libre)</li>
-                    <li>• cause (texte libre)</li>
-                    <li>• causeType (Technique/Client/Casse)</li>
-                    <li>• technician (BRAHIM/ABDERAHMAN/AXE)</li>
-                    <li>• delaiRespect (true/false)</li>
-                    <li>• motifCloture (texte libre)</li>
-                    <li>• isReopened (true/false)</li>
+                    <li>• ND/Login (ex: ND123456)</li>
+                    <li>• Service (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
+                    <li>• Date Création (JJ/MM/AAAA HH:mm)</li>
+                    <li>• Date Clôture (JJ/MM/AAAA HH:mm)</li>
+                    <li>• Description (texte)</li>
+                    <li>• Cause (texte)</li>
+                    <li>• Type Cause (Technique/Client/Casse)</li>
+                    <li>• Technicien (BRAHIM/ABDERAHMAN/AXE)</li>
+                    <li>• Délai Respecté (true/false)</li>
+                    <li>• Status (EN_COURS/CLOTURE)</li>
+                    <li>• Motif Clôture (texte)</li>
                   </ul>
                 </div>
               </div>
