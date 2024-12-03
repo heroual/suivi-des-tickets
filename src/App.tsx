@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { useAutoSignout } from './hooks/useAutoSignout';
-import { getTickets } from './services/firebase';
+import { getTickets, addMultipleTickets } from './services/firebase';
 import AuthModal from './components/AuthModal';
 import MainHeader from './components/MainHeader';
 import Dashboard from './components/Dashboard';
@@ -45,6 +45,16 @@ export default function App() {
     }
   };
 
+  const handleImportTickets = async (importedTickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
+    try {
+      await addMultipleTickets(importedTickets);
+      await loadTickets();
+    } catch (error) {
+      console.error('Error importing tickets:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -82,7 +92,7 @@ export default function App() {
           <ExcelImport 
             isOpen={showExcelImport} 
             onClose={() => setShowExcelImport(false)} 
-            onImport={loadTickets}
+            onImport={handleImportTickets}
           />
         )}
 

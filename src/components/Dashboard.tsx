@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PKIDisplay from './PKIDisplay';
 import MonthlyIndicators from './MonthlyIndicators';
 import CausesSuggestions from './CausesSuggestions';
@@ -9,8 +9,8 @@ import TicketForm from './TicketForm';
 import DateBar from './DateBar';
 import CauseTypeChart from './CauseTypeChart';
 import { useFilteredTickets } from '../hooks/useFilteredTickets';
+import { addMultipleTickets } from '../services/firebase/tickets';
 import type { Ticket } from '../types';
-import { calculatePKI } from '../utils/pki';
 
 interface DashboardProps {
   tickets: Ticket[];
@@ -19,20 +19,30 @@ interface DashboardProps {
 
 export default function Dashboard({ tickets, onTicketsUpdate }: DashboardProps) {
   const filteredTickets = useFilteredTickets(tickets);
-  const pki = calculatePKI(filteredTickets);
 
   const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
     try {
+      await addMultipleTickets([ticketData]);
       await onTicketsUpdate();
     } catch (error) {
       console.error('Error adding ticket:', error);
     }
   };
 
+  const handleImportTickets = async (tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]) => {
+    try {
+      await addMultipleTickets(tickets);
+      await onTicketsUpdate();
+    } catch (error) {
+      console.error('Error importing tickets:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <DateBar />
-      <PKIDisplay stats={pki} />
+      <PKIDisplay stats={calculatePKI(filteredTickets)} />
       <MonthlyIndicators tickets={filteredTickets} />
       <MonthlyStats tickets={filteredTickets} />
       <CausesSuggestions tickets={filteredTickets} />

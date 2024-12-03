@@ -1,7 +1,8 @@
-import { addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, writeBatch, Timestamp } from 'firebase/firestore';
+import { addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, writeBatch, Timestamp, collection } from 'firebase/firestore';
 import { db, auth } from './config';
 import { ticketsCollection } from './collections';
 import type { Ticket } from '../../types';
+import { nanoid } from 'nanoid';
 
 export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   if (!auth.currentUser) throw new Error('User not authenticated');
@@ -75,35 +76,42 @@ export async function getTickets(): Promise<Ticket[]> {
   }
 }
 
-export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<Ticket[]> {
+export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<void> {
   if (!auth.currentUser) throw new Error('User not authenticated');
 
   try {
-    const batch = writeBatch(db);
-    const newTickets: Ticket[] = [];
-
-    for (const ticket of tickets) {
-      const docRef = doc(ticketsCollection);
-      const newTicket: Omit<Ticket, 'id'> = {
-        ...ticket,
-        reopened: false,
-        reopenCount: 0,
-        imported: true
-      };
-
-      batch.set(docRef, {
-        ...newTicket,
-        dateCreation: Timestamp.fromDate(ticket.dateCreation),
-        dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
-        createdAt: Timestamp.now(),
-        userId: auth.currentUser.uid
-      });
-
-      newTickets.push({ ...newTicket, id: docRef.id } as Ticket);
+    // Split tickets into chunks of 500 (Firestore batch limit)
+    const chunkSize = 500;
+    const chunks = [];
+    for (let i = 0; i < tickets.length; i += chunkSize) {
+      chunks.push(tickets.slice(i, i + chunkSize));
     }
 
-    await batch.commit();
-    return newTickets;
+    // Process each chunk with a new batch
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+
+      for (const ticket of chunk) {
+        const docRef = doc(collection(db, 'tickets'));
+        const ticketData = {
+          ...ticket,
+          id: nanoid(),
+          dateCreation: Timestamp.fromDate(ticket.dateCreation),
+          dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          userId: auth.currentUser.uid,
+          imported: true,
+          reopened: false,
+          reopenCount: 0
+        };
+
+        batch.set(docRef, ticketData);
+      }
+
+      // Commit the batch
+      await batch.commit();
+    }
   } catch (error) {
     console.error('Error adding multiple tickets:', error);
     throw error;
