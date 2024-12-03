@@ -14,7 +14,9 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
       dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
       createdAt: Timestamp.now(),
       userId: auth.currentUser.uid,
-      imported: false
+      imported: false,
+      reopened: false,
+      reopenCount: 0
     });
     return docRef.id;
   } catch (error) {
@@ -27,8 +29,9 @@ export async function updateTicket(id: string, data: Partial<Ticket>): Promise<v
   if (!auth.currentUser) throw new Error('User not authenticated');
 
   try {
-    const ticketRef = doc(db, 'tickets', id);
+    const ticketRef = doc(ticketsCollection, id);
     const updateData: Record<string, any> = {
+      ...data,
       updatedAt: Timestamp.now(),
       userId: auth.currentUser.uid
     };
@@ -40,12 +43,6 @@ export async function updateTicket(id: string, data: Partial<Ticket>): Promise<v
       updateData.dateCloture = Timestamp.fromDate(data.dateCloture);
     }
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'dateCreation' && key !== 'dateCloture') {
-        updateData[key] = value;
-      }
-    });
-
     await updateDoc(ticketRef, updateData);
   } catch (error) {
     console.error('Error updating ticket:', error);
@@ -53,9 +50,19 @@ export async function updateTicket(id: string, data: Partial<Ticket>): Promise<v
   }
 }
 
-export async function getTickets(): Promise<Ticket[]> {
+export async function deleteTicket(id: string): Promise<void> {
   if (!auth.currentUser) throw new Error('User not authenticated');
 
+  try {
+    const ticketRef = doc(ticketsCollection, id);
+    await deleteDoc(ticketRef);
+  } catch (error) {
+    console.error('Error deleting ticket:', error);
+    throw error;
+  }
+}
+
+export async function getTickets(): Promise<Ticket[]> {
   try {
     const q = query(ticketsCollection, orderBy('dateCreation', 'desc'));
     const querySnapshot = await getDocs(q);
@@ -64,9 +71,19 @@ export async function getTickets(): Promise<Ticket[]> {
       const data = doc.data();
       return {
         id: doc.id,
-        ...data,
-        dateCreation: data.dateCreation instanceof Timestamp ? data.dateCreation.toDate() : new Date(data.dateCreation),
-        dateCloture: data.dateCloture instanceof Timestamp ? data.dateCloture?.toDate() : data.dateCloture ? new Date(data.dateCloture) : undefined,
+        ndLogin: data.ndLogin,
+        serviceType: data.serviceType,
+        dateCreation: data.dateCreation?.toDate() || new Date(),
+        dateCloture: data.dateCloture?.toDate(),
+        description: data.description,
+        cause: data.cause,
+        causeType: data.causeType,
+        technician: data.technician,
+        status: data.status,
+        delaiRespect: data.delaiRespect,
+        reopened: data.reopened || false,
+        reopenCount: data.reopenCount || 0,
+        motifCloture: data.motifCloture,
         imported: data.imported || false
       } as Ticket;
     });
@@ -80,14 +97,12 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
   if (!auth.currentUser) throw new Error('User not authenticated');
 
   try {
-    // Split tickets into chunks of 500 (Firestore batch limit)
     const chunkSize = 500;
     const chunks = [];
     for (let i = 0; i < tickets.length; i += chunkSize) {
       chunks.push(tickets.slice(i, i + chunkSize));
     }
 
-    // Process each chunk with a new batch
     for (const chunk of chunks) {
       const batch = writeBatch(db);
 
@@ -109,7 +124,6 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
         batch.set(docRef, ticketData);
       }
 
-      // Commit the batch
       await batch.commit();
     }
   } catch (error) {

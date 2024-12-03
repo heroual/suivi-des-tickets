@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { addMultipleTickets } from '../services/firebase';
+import { useTickets } from '../hooks/useTickets';
 import PKIDisplay from './PKIDisplay';
 import Documentation from './Documentation';
 import AppInfo from './AppInfo';
 import DateBar from './DateBar';
 import { calculatePKI } from '../utils/pki';
-import type { Ticket } from '../types';
 import MonthlyIndicators from './MonthlyIndicators';
 import CausesSuggestions from './CausesSuggestions';
 import CriticalCableTickets from './CriticalCableTickets';
@@ -15,39 +14,42 @@ import MonthlyStats from './MonthlyStats';
 import TicketForm from './TicketForm';
 import FeedbackButton from './FeedbackButton';
 import FeedbackModal from './FeedbackModal';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorMessage from './ErrorMessage';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { tickets, loading, error, refreshTickets } = useTickets();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
-  const handleNewTicket = async (ticketData: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>) => {
-    try {
-      await addMultipleTickets([ticketData]);
-    } catch (error) {
-      console.error('Error adding ticket:', error);
-    }
-  };
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={refreshTickets} />;
+  }
 
   return (
     <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <DateBar />
-      <PKIDisplay stats={calculatePKI([])} />
-      <MonthlyIndicators tickets={[]} />
-      <MonthlyStats tickets={[]} />
-      <CausesSuggestions tickets={[]} />
+      <PKIDisplay stats={calculatePKI(tickets)} />
+      <MonthlyIndicators tickets={tickets} />
+      <MonthlyStats tickets={tickets} />
+      <CausesSuggestions tickets={tickets} />
       
       <div className="space-y-6">
         <CriticalCableTickets 
-          tickets={[]}
-          onAddTicket={handleNewTicket}
-          onUpdateTicket={() => {}}
-          onDeleteTicket={() => {}}
+          tickets={tickets}
+          onAddTicket={refreshTickets}
+          onUpdateTicket={refreshTickets}
+          onDeleteTicket={refreshTickets}
         />
-        <ActionPlan tickets={[]} />
+        <ActionPlan tickets={tickets} />
       </div>
       
       <div className="space-y-6">
-        <TicketForm onSubmit={handleNewTicket} />
+        <TicketForm onSubmit={refreshTickets} />
       </div>
 
       <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
