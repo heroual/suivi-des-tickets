@@ -98,7 +98,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
   if (!auth.currentUser) throw new Error('User not authenticated');
 
   try {
-    const chunkSize = 500;
+    const chunkSize = 500; // Firestore batch limit is 500
     const chunks = [];
     for (let i = 0; i < tickets.length; i += chunkSize) {
       chunks.push(tickets.slice(i, i + chunkSize));

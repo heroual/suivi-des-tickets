@@ -5,13 +5,6 @@ import type { Ticket, ServiceType, Technician, CauseType } from '../types';
 import { parse, format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import AccessDeniedMessage from './AccessDeniedMessage';
-import React, { useState } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import type { Ticket, ServiceType, Technician, CauseType } from '../types';
-import { parse, format } from 'date-fns';
-import { useAuth } from '../hooks/useAuth';
-import AccessDeniedMessage from './AccessDeniedMessage';
 import { addMultipleTickets } from '../services/firebase';
 
 interface ExcelImportProps {
@@ -155,7 +148,12 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         return;
       }
 
+      // Add tickets to database
+      await addMultipleTickets(tickets);
+      
+      // Call onImport callback
       await onImport(tickets);
+
       setStatus({
         type: 'success',
         message: `${tickets.length} tickets importés avec succès`,
@@ -165,7 +163,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     } catch (error) {
       setStatus({
         type: 'error',
-        message: 'Erreur lors de la lecture du fichier Excel',
+        message: error instanceof Error ? error.message : 'Erreur lors de l\'importation',
       });
     } finally {
       setLoading(false);
