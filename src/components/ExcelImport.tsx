@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Loader } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Ticket, ServiceType, Technician, CauseType } from '../types';
 import { parse, format } from 'date-fns';
@@ -14,14 +14,16 @@ interface ExcelImportProps {
 }
 
 interface ImportStatus {
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   message: string;
+  details?: string[];
 }
 
 export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportProps) {
   const { isAdmin } = useAuth();
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   if (!isAdmin) {
     return <AccessDeniedMessage />;
@@ -31,15 +33,28 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
 
   const parseDate = (dateStr: string) => {
     try {
-      // First try parsing with time
-      return parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
-    } catch {
-      try {
-        // If that fails, try parsing just the date
-        return parse(dateStr, 'dd/MM/yyyy', new Date());
-      } catch (error) {
-        throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm ou JJ/MM/AAAA`);
+      // Try different date formats
+      const formats = [
+        'dd/MM/yyyy HH:mm',
+        'dd/MM/yyyy',
+        'yyyy-MM-dd HH:mm',
+        'yyyy-MM-dd',
+        'MM/dd/yyyy HH:mm',
+        'MM/dd/yyyy'
+      ];
+
+      for (const formatStr of formats) {
+        try {
+          const date = parse(dateStr, formatStr, new Date());
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        } catch {}
       }
+
+      throw new Error(`Format de date invalide: ${dateStr}`);
+    } catch (error) {
+      throw new Error(`Format de date invalide: ${dateStr}. Formats acceptés: JJ/MM/AAAA HH:mm ou JJ/MM/AAAA`);
     }
   };
 
@@ -111,6 +126,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedFile(file);
     setLoading(true);
     setStatus(null);
 
@@ -132,10 +148,11 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
         }
       });
 
-      if (errors.length > 0) {
+      if (errors.length > 0 && tickets.length === 0) {
         setStatus({
           type: 'error',
-          message: `Erreurs détectées:\n${errors.join('\n')}`,
+          message: 'Erreurs détectées dans le fichier:',
+          details: errors
         });
         return;
       }
@@ -143,27 +160,36 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       if (tickets.length === 0) {
         setStatus({
           type: 'error',
-          message: 'Aucun ticket valide trouvé dans le fichier',
+          message: 'Aucun ticket valide trouvé dans le fichier'
         });
         return;
       }
 
       // Add tickets to database
-      await addMultipleTickets(tickets);
+      const result = await addMultipleTickets(tickets);
       
       // Call onImport callback
       await onImport(tickets);
 
-      setStatus({
-        type: 'success',
-        message: `${tickets.length} tickets importés avec succès`,
-      });
+      if (result.failed.length > 0) {
+        setStatus({
+          type: 'warning',
+          message: `${result.success} tickets importés avec succès, ${result.failed.length} échecs`,
+          details: result.failed.map(f => `Ligne ${f.index + 2}: ${f.error}`)
+        });
+      } else {
+        setStatus({
+          type: 'success',
+          message: `${result.success} tickets importés avec succès`
+        });
+      }
 
       e.target.value = '';
+      setSelectedFile(null);
     } catch (error) {
       setStatus({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Erreur lors de l\'importation',
+        message: error instanceof Error ? error.message : 'Erreur lors de l\'importation'
       });
     } finally {
       setLoading(false);
@@ -277,7 +303,13 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                   />
                   <div className="flex flex-col items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
                     {loading ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                      <div className="flex flex-col items-center">
+                        <Loader className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600">
+                          Importation en cours...
+                          {selectedFile && <span className="ml-1">({selectedFile.name})</span>}
+                        </p>
+                      </div>
                     ) : (
                       <>
                         <Upload className="w-12 h-12 text-blue-600 mb-3" />
@@ -300,24 +332,39 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
             {status && (
               <div
                 className={`p-4 rounded-lg ${
-                  status.type === 'success'
-                    ? 'bg-green-50 border-l-4 border-green-500'
-                    : 'bg-red-50 border-l-4 border-red-500'
+                  status.type === 'success' ? 'bg-green-50 border-l-4 border-green-500' :
+                  status.type === 'warning' ? 'bg-yellow-50 border-l-4 border-yellow-500' :
+                  'bg-red-50 border-l-4 border-red-500'
                 }`}
               >
                 <div className="flex items-start">
                   {status.type === 'success' ? (
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 mr-2" />
+                  ) : status.type === 'warning' ? (
+                    <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 mr-2" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-2" />
                   )}
-                  <p
-                    className={`text-sm ${
-                      status.type === 'success' ? 'text-green-700' : 'text-red-700'
-                    } whitespace-pre-line`}
-                  >
-                    {status.message}
-                  </p>
+                  <div>
+                    <p className={`text-sm ${
+                      status.type === 'success' ? 'text-green-700' :
+                      status.type === 'warning' ? 'text-yellow-700' :
+                      'text-red-700'
+                    }`}>
+                      {status.message}
+                    </p>
+                    {status.details && status.details.length > 0 && (
+                      <ul className="mt-2 text-sm space-y-1 list-disc list-inside">
+                        {status.details.map((detail, index) => (
+                          <li key={index} className={
+                            status.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
+                          }>
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
