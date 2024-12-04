@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { format, eachMonthOfInterval, startOfYear, endOfYear, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { format, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, TrendingUp, Clock, AlertTriangle, Download } from 'lucide-react';
 import type { Ticket } from '../types';
+import { getMonthlyClosedTickets } from '../utils/pki';
 import * as XLSX from 'xlsx';
 
 interface YearlyTimelineProps {
@@ -13,10 +14,9 @@ interface YearlyTimelineProps {
 interface MonthlyStats {
   month: string;
   total: number;
-  resolved: number;
-  onTime: number;
-  reopened: number;
-  technical: number;
+  horsDelai: number;
+  reouvertures: number;
+  technique: number;
   client: number;
   cable: number;
 }
@@ -30,20 +30,14 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
     });
 
     return months.map(month => {
-      const monthStart = startOfMonth(month);
-      const monthEnd = endOfMonth(month);
-
-      const monthTickets = tickets.filter(ticket =>
-        isWithinInterval(ticket.dateCreation, { start: monthStart, end: monthEnd })
-      );
+      const monthTickets = getMonthlyClosedTickets(tickets, month);
 
       return {
         month: format(month, 'MMM', { locale: fr }),
         total: monthTickets.length,
-        resolved: monthTickets.filter(t => t.status === 'CLOTURE').length,
-        onTime: monthTickets.filter(t => t.delaiRespect).length,
-        reopened: monthTickets.filter(t => t.reopened).length,
-        technical: monthTickets.filter(t => t.causeType === 'Technique').length,
+        horsDelai: monthTickets.filter(t => !t.delaiRespect).length,
+        reouvertures: monthTickets.filter(t => t.reopened).length,
+        technique: monthTickets.filter(t => t.causeType === 'Technique').length,
         client: monthTickets.filter(t => t.causeType === 'Client').length,
         cable: monthTickets.filter(t => t.causeType === 'Casse').length
       };
@@ -52,27 +46,24 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
 
   const yearTotals = useMemo(() => ({
     total: monthlyStats.reduce((acc, month) => acc + month.total, 0),
-    resolved: monthlyStats.reduce((acc, month) => acc + month.resolved, 0),
-    onTime: monthlyStats.reduce((acc, month) => acc + month.onTime, 0),
-    reopened: monthlyStats.reduce((acc, month) => acc + month.reopened, 0)
+    horsDelai: monthlyStats.reduce((acc, month) => acc + month.horsDelai, 0),
+    reouvertures: monthlyStats.reduce((acc, month) => acc + month.reouvertures, 0)
   }), [monthlyStats]);
 
   const exportToExcel = () => {
     const summaryData = [
-      ['Statistiques Annuelles', new Date().getFullYear().toString()],
+      ['Statistiques Annuelles des Tickets Clôturés', new Date().getFullYear().toString()],
       [''],
       ['Totaux'],
-      ['Total tickets', yearTotals.total],
-      ['Tickets résolus', yearTotals.resolved],
-      ['Dans les délais', yearTotals.onTime],
-      ['Réouvertures', yearTotals.reopened],
+      ['Total tickets clôturés', yearTotals.total],
+      ['Hors délai', yearTotals.horsDelai],
+      ['Réouvertures', yearTotals.reouvertures],
       [''],
       ['Détails Mensuels'],
       [
         'Mois',
-        'Total',
-        'Résolus',
-        'Dans les délais',
+        'Total Clôturés',
+        'Hors délai',
         'Réouvertures',
         'Technique',
         'Client',
@@ -81,10 +72,9 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
       ...monthlyStats.map(month => [
         month.month,
         month.total,
-        month.resolved,
-        month.onTime,
-        month.reopened,
-        month.technical,
+        month.horsDelai,
+        month.reouvertures,
+        month.technique,
         month.client,
         month.cable
       ])
@@ -93,20 +83,18 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(summaryData);
     
-    // Set column widths
     ws['!cols'] = [
       { wch: 15 }, // Month
-      { wch: 10 }, // Total
-      { wch: 10 }, // Resolved
-      { wch: 15 }, // On Time
-      { wch: 12 }, // Reopened
-      { wch: 10 }, // Technical
+      { wch: 15 }, // Total
+      { wch: 12 }, // Hors délai
+      { wch: 12 }, // Réouvertures
+      { wch: 10 }, // Technique
       { wch: 10 }, // Client
       { wch: 10 }  // Cable
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, 'Statistiques Annuelles');
-    XLSX.writeFile(wb, `statistiques-annuelles-${new Date().getFullYear()}.xlsx`);
+    XLSX.writeFile(wb, `statistiques-clotures-${new Date().getFullYear()}.xlsx`);
   };
 
   return (
@@ -118,9 +106,9 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
             <Calendar className="w-8 h-8 text-blue-600" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Timeline Annuelle {new Date().getFullYear()}
+                Timeline des Clôtures {new Date().getFullYear()}
               </h1>
-              <p className="text-gray-600">Vue d'ensemble des performances mensuelles</p>
+              <p className="text-gray-600">Vue d'ensemble des tickets clôturés par mois</p>
             </div>
           </div>
           <button
@@ -133,46 +121,42 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
         </div>
 
         {/* Annual KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-blue-900 font-medium">Total Tickets</h3>
+              <h3 className="text-blue-900 font-medium">Total Clôturés</h3>
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
             <p className="text-2xl font-bold text-blue-900 mt-2">{yearTotals.total}</p>
           </div>
 
-          <div className="bg-green-50 rounded-lg p-4">
+          <div className="bg-red-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-green-900 font-medium">Tickets Résolus</h3>
-              <div className="text-sm font-medium text-green-600">
-                {yearTotals.total > 0 ? ((yearTotals.resolved / yearTotals.total) * 100).toFixed(1) : 0}%
-              </div>
+              <h3 className="text-red-900 font-medium">Hors Délai</h3>
+              <Clock className="w-5 h-5 text-red-600" />
             </div>
-            <p className="text-2xl font-bold text-green-900 mt-2">{yearTotals.resolved}</p>
+            <p className="text-2xl font-bold text-red-900 mt-2">{yearTotals.horsDelai}</p>
+            <p className="text-sm text-red-600 mt-1">
+              {yearTotals.total > 0 ? ((yearTotals.horsDelai / yearTotals.total) * 100).toFixed(1) : 0}%
+            </p>
           </div>
 
           <div className="bg-amber-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-amber-900 font-medium">Dans les Délais</h3>
-              <Clock className="w-5 h-5 text-amber-600" />
+              <h3 className="text-amber-900 font-medium">Réouvertures</h3>
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
             </div>
-            <p className="text-2xl font-bold text-amber-900 mt-2">{yearTotals.onTime}</p>
-          </div>
-
-          <div className="bg-red-50 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-red-900 font-medium">Réouvertures</h3>
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-            </div>
-            <p className="text-2xl font-bold text-red-900 mt-2">{yearTotals.reopened}</p>
+            <p className="text-2xl font-bold text-amber-900 mt-2">{yearTotals.reouvertures}</p>
+            <p className="text-sm text-amber-600 mt-1">
+              {yearTotals.total > 0 ? ((yearTotals.reouvertures / yearTotals.total) * 100).toFixed(1) : 0}%
+            </p>
           </div>
         </div>
       </div>
 
       {/* Monthly Timeline Chart */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-6">Évolution Mensuelle</h2>
+        <h2 className="text-xl font-semibold mb-6">Évolution Mensuelle des Clôtures</h2>
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyStats}>
@@ -181,29 +165,9 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="total" name="Total" fill="#3B82F6" />
-              <Bar dataKey="resolved" name="Résolus" fill="#10B981" />
-              <Bar dataKey="onTime" name="Dans les délais" fill="#F59E0B" />
-              <Bar dataKey="reopened" name="Réouvertures" fill="#EF4444" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Cause Types Timeline */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-6">Types de Causes par Mois</h2>
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="technical" name="Technique" fill="#6366F1" />
-              <Bar dataKey="client" name="Client" fill="#F59E0B" />
-              <Bar dataKey="cable" name="Câble" fill="#EF4444" />
+              <Bar dataKey="total" name="Total Clôturés" fill="#3B82F6" />
+              <Bar dataKey="horsDelai" name="Hors Délai" fill="#EF4444" />
+              <Bar dataKey="reouvertures" name="Réouvertures" fill="#F59E0B" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -212,7 +176,7 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
       {/* Monthly Details Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold">Détails Mensuels</h2>
+          <h2 className="text-xl font-semibold">Détails Mensuels des Clôtures</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -222,13 +186,10 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
                   Mois
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
+                  Total Clôturés
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Résolus
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dans les délais
+                  Hors Délai
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Réouvertures
@@ -250,26 +211,23 @@ export default function YearlyTimeline({ tickets }: YearlyTimelineProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {month.month}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {month.total}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      {month.resolved}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
-                      {month.onTime}
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                      {month.total}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                      {month.reopened}
+                      {month.horsDelai}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+                      {month.reouvertures}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {month.technical}
+                    {month.technique}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {month.client}
