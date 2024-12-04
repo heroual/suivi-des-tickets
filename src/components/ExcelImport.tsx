@@ -10,7 +10,7 @@ import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from '
 import * as XLSX from 'xlsx';
 import type { Ticket, ServiceType, Technician, CauseType } from '../types';
 import { parse, format } from 'date-fns';
-import { useAuth } from '../hooks/us;eAuth';
+import { useAuth } from '../hooks/useAuth';
 import AccessDeniedMessage from './AccessDeniedMessage';
 import { addMultipleTickets } from '../services/firebase';
 
