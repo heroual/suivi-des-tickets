@@ -1,8 +1,9 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Ticket } from '../types';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { Ticket } from '../types';
+import { getDailyClosedTickets } from '../utils/pki';
 
 interface MonthlyStatsProps {
   tickets: Ticket[];
@@ -17,64 +18,42 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
 
   const daysInMonth = eachDayOfInterval(monthInterval);
   const monthlyData = daysInMonth.map(day => {
-    const dayStr = format(day, 'yyyy-MM-dd');
-    const dayTickets = tickets.filter(
-      ticket => format(ticket.dateCreation, 'yyyy-MM-dd') === dayStr
-    );
+    const dayTickets = getDailyClosedTickets(tickets, day);
 
     return {
-      id: dayStr,
       date: format(day, 'd MMM', { locale: fr }),
       total: dayTickets.length,
-      resolus: dayTickets.filter(t => t.status === 'CLOTURE').length,
+      resolus: dayTickets.length, // All tickets are resolved since we're filtering by closure date
       horsDelai: dayTickets.filter(t => !t.delaiRespect).length,
       reouvertures: dayTickets.filter(t => t.reopened).length,
     };
   });
 
-  const monthTotals = {
-    tickets: tickets.filter(t => 
-      t.dateCreation >= monthInterval.start && 
-      t.dateCreation <= monthInterval.end
-    ).length,
-    resolus: tickets.filter(t => 
-      t.dateCreation >= monthInterval.start && 
-      t.dateCreation <= monthInterval.end && 
-      t.status === 'CLOTURE'
-    ).length,
-    horsDelai: tickets.filter(t => 
-      t.dateCreation >= monthInterval.start && 
-      t.dateCreation <= monthInterval.end && 
-      !t.delaiRespect
-    ).length,
-    reouvertures: tickets.filter(t => 
-      t.dateCreation >= monthInterval.start && 
-      t.dateCreation <= monthInterval.end && 
-      t.reopened
-    ).length,
-  };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">
-          Statistiques du Mois {format(currentMonth, 'MMMM yyyy', { locale: fr })}
+          Tickets Clôturés - {format(currentMonth, 'MMMM yyyy', { locale: fr })}
         </h2>
         <div className="flex gap-4">
           <div className="text-sm">
-            <span className="text-blue-600 font-semibold">{monthTotals.tickets}</span> Total
+            <span className="text-blue-600 font-semibold">
+              {monthlyData.reduce((acc, day) => acc + day.total, 0)}
+            </span> Total Clôturés
           </div>
           <div className="text-sm">
-            <span className="text-green-600 font-semibold">{monthTotals.resolus}</span> Résolus
+            <span className="text-red-600 font-semibold">
+              {monthlyData.reduce((acc, day) => acc + day.horsDelai, 0)}
+            </span> Hors Délai
           </div>
           <div className="text-sm">
-            <span className="text-red-600 font-semibold">{monthTotals.horsDelai}</span> Hors Délai
-          </div>
-          <div className="text-sm">
-            <span className="text-amber-600 font-semibold">{monthTotals.reouvertures}</span> Réouvertures
+            <span className="text-amber-600 font-semibold">
+              {monthlyData.reduce((acc, day) => acc + day.reouvertures, 0)}
+            </span> Réouvertures
           </div>
         </div>
       </div>
+
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={monthlyData}>
@@ -85,15 +64,9 @@ export default function MonthlyStats({ tickets }: MonthlyStatsProps) {
             <Legend />
             <Bar 
               dataKey="total" 
-              name="Total" 
+              name="Tickets Clôturés" 
               fill="#3B82F6" 
               key={`total-${monthInterval.start.getTime()}`} 
-            />
-            <Bar 
-              dataKey="resolus" 
-              name="Résolus" 
-              fill="#10B981" 
-              key={`resolus-${monthInterval.start.getTime()}`} 
             />
             <Bar 
               dataKey="horsDelai" 
