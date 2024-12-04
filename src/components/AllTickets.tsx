@@ -11,7 +11,7 @@ interface AllTicketsProps {
 
 export default function AllTickets({ tickets }: AllTicketsProps) {
   const [selectedCauseType, setSelectedCauseType] = useState<CauseType | 'ALL'>('ALL');
-  const [searchDurée, setSearchDurée] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const filteredTickets = useMemo(() => {
@@ -23,19 +23,22 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
     }
 
     // Apply search filter
-    if (searchDurée) {
-      const search = searchDurée.toLowerCase();
-      filtered = filtered.filter(ticket => 
-        ticket.ndLogin.toLowerCase().includes(search) ||
-        ticket.description.toLowerCase().includes(search) ||
-        ticket.cause.toLowerCase().includes(search) ||
-        ticket.motifCloture?.toLowerCase().includes(search)
-      );
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(ticket => {
+        // Safely check if properties exist and are strings before calling toLowerCase()
+        const ndLoginMatch = typeof ticket.ndLogin === 'string' && ticket.ndLogin.toLowerCase().includes(search);
+        const descriptionMatch = typeof ticket.description === 'string' && ticket.description.toLowerCase().includes(search);
+        const causeMatch = typeof ticket.cause === 'string' && ticket.cause.toLowerCase().includes(search);
+        const motifClotureMatch = typeof ticket.motifCloture === 'string' && ticket.motifCloture.toLowerCase().includes(search);
+
+        return ndLoginMatch || descriptionMatch || causeMatch || motifClotureMatch;
+      });
     }
 
     // Sort by date, most recent first
     return filtered.sort((a, b) => b.dateCreation.getTime() - a.dateCreation.getTime());
-  }, [tickets, selectedCauseType, searchDurée]);
+  }, [tickets, selectedCauseType, searchTerm]);
 
   const stats = useMemo(() => ({
     total: filteredTickets.length,
@@ -47,11 +50,11 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
   const exportToExcel = () => {
     const data = filteredTickets.map(ticket => ({
       'Date': format(ticket.dateCreation, 'dd/MM/yyyy HH:mm', { locale: fr }),
-      'ND/Login': ticket.ndLogin,
+      'ND/Login': ticket.ndLogin || '',
       'Service': ticket.serviceType,
-      'Description': ticket.description,
+      'Description': ticket.description || '',
       'Type de Cause': ticket.causeType,
-      'Cause': ticket.cause,
+      'Cause': ticket.cause || '',
       'Technicien': ticket.technician,
       'Status': ticket.status,
       'Dans les délais': ticket.delaiRespect ? 'Oui' : 'Non',
@@ -159,16 +162,16 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
             <input
               type="text"
               placeholder="Rechercher un ticket..."
-              value={searchDurée}
-              onChange={(e) => setSearchDurée(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
-            {searchDurée && (
+            {searchTerm && (
               <button
-                onClick={() => setSearchDurée('')}
+                onClick={() => setSearchTerm('')}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
                 <X className="h-5 w-5 text-gray-400 hover:text-gray-500" />
@@ -214,7 +217,7 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
                     {format(ticket.dateCreation, 'dd/MM/yyyy HH:mm', { locale: fr })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {ticket.ndLogin}
+                    {ticket.ndLogin || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -222,7 +225,7 @@ export default function AllTickets({ tickets }: AllTicketsProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {ticket.description}
+                    {ticket.description || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
