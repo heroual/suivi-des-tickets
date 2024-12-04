@@ -98,41 +98,37 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
   if (!auth.currentUser) throw new Error('User not authenticated');
 
   try {
-    const chunkSize = 500; // Firebase has a limit of 500 operations per batch
+    const chunkSize = 500;
     const chunks = [];
-    
-    // Split tickets into chunks of 500
     for (let i = 0; i < tickets.length; i += chunkSize) {
       chunks.push(tickets.slice(i, i + chunkSize));
     }
 
-    // Process each chunk with a new batch
     for (const chunk of chunks) {
       const batch = writeBatch(db);
 
-      chunk.forEach(ticket => {
-        const docRef = doc(ticketsCollection); // Let Firestore auto-generate the ID
+      for (const ticket of chunk) {
+        const docRef = doc(collection(db, 'tickets'));
         const ticketData = {
           ...ticket,
-          id: nanoid(), // Generate a unique ID
+          id: nanoid(),
           dateCreation: Timestamp.fromDate(ticket.dateCreation),
           dateCloture: ticket.dateCloture ? Timestamp.fromDate(ticket.dateCloture) : null,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-          userId: auth.currentUser?.uid,
+          userId: auth.currentUser.uid,
           imported: true,
           reopened: false,
           reopenCount: 0
         };
 
         batch.set(docRef, ticketData);
-      });
+      }
 
-      // Commit the batch
       await batch.commit();
     }
   } catch (error) {
     console.error('Error adding multiple tickets:', error);
-    throw new Error('Failed to import tickets. Please try again.');
+    throw error;
   }
 }
