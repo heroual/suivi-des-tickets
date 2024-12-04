@@ -23,26 +23,11 @@ export function useTickets() {
 
   useEffect(() => {
     loadTickets();
-
-    // Set up real-time updates
-    const unsubscribe = getTickets()
-      .then(() => {
-        // Initial load successful
-      })
-      .catch((error) => {
-        console.error('Error setting up real-time updates:', error);
-      });
-
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
   }, [loadTickets]);
 
-  const refreshTickets = () => {
+  const refreshTickets = useCallback(() => {
     loadTickets();
-  };
+  }, [loadTickets]);
 
   return {
     tickets,
