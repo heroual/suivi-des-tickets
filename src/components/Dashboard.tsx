@@ -18,18 +18,40 @@ import FeedbackSection from './FeedbackSection';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 import { startOfMonth, endOfMonth } from 'date-fns';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { tickets, loading, error, refreshTickets } = useTickets();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    criticalTickets: true,
+    actionPlan: true,
+    ticketForm: true,
+    feedback: true
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorMessage message={error} onRetry={refreshTickets} />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <ErrorMessage message={error} onRetry={refreshTickets} />
+      </div>
+    );
   }
 
   // Calculate monthly PKI
@@ -42,31 +64,101 @@ export default function Dashboard() {
   );
   const monthlyPKI = calculatePKI(monthlyTickets);
 
+  const SectionHeader = ({ title, section }: { title: string; section: keyof typeof expandedSections }) => (
+    <div 
+      className="flex items-center justify-between bg-white p-4 rounded-t-xl shadow-sm cursor-pointer hover:bg-gray-50"
+      onClick={() => toggleSection(section)}
+    >
+      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      {expandedSections[section] ? (
+        <ChevronUp className="w-5 h-5 text-gray-500" />
+      ) : (
+        <ChevronDown className="w-5 h-5 text-gray-500" />
+      )}
+    </div>
+  );
+
   return (
-    <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <DateBar />
-      <PKIDisplay stats={monthlyPKI} isMonthly={true} />
-      <MonthlyIndicators tickets={tickets} />
-      <MonthlyStats tickets={tickets} />
-      <CausesSuggestions tickets={tickets} />
-      
-      <div className="space-y-6">
-        <CriticalCableTickets 
-          tickets={tickets}
-          onAddTicket={refreshTickets}
-          onUpdateTicket={refreshTickets}
-          onDeleteTicket={refreshTickets}
-        />
-        <ActionPlan tickets={tickets} />
-      </div>
-      
-      <div className="space-y-6">
-        <TicketForm onSubmit={refreshTickets} />
-        <FeedbackSection />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Top Section - Always Visible */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <DateBar />
+          <div className="mt-6">
+            <PKIDisplay stats={monthlyPKI} isMonthly={true} />
+          </div>
+        </div>
+
+        {/* Monthly Indicators */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Indicateurs Mensuels</h2>
+          <MonthlyIndicators tickets={tickets} />
+        </div>
+
+        {/* Monthly Stats */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistiques Mensuelles</h2>
+          <MonthlyStats tickets={tickets} />
+        </div>
+
+        {/* Causes and Suggestions */}
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Analyse des Causes</h2>
+          <CausesSuggestions tickets={tickets} />
+        </div>
+
+        {/* Critical Cable Tickets Section */}
+        <div className="bg-white rounded-xl shadow-sm">
+          <SectionHeader title="Tickets Câbles Critiques" section="criticalTickets" />
+          {expandedSections.criticalTickets && (
+            <div className="p-4 sm:p-6">
+              <CriticalCableTickets 
+                tickets={tickets}
+                onAddTicket={refreshTickets}
+                onUpdateTicket={refreshTickets}
+                onDeleteTicket={refreshTickets}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Action Plan Section */}
+        <div className="bg-white rounded-xl shadow-sm">
+          <SectionHeader title="Plan d'Action" section="actionPlan" />
+          {expandedSections.actionPlan && (
+            <div className="p-4 sm:p-6">
+              <ActionPlan tickets={tickets} />
+            </div>
+          )}
+        </div>
+
+        {/* Ticket Form Section */}
+        <div className="bg-white rounded-xl shadow-sm">
+          <SectionHeader title="Nouveau Ticket" section="ticketForm" />
+          {expandedSections.ticketForm && (
+            <div className="p-4 sm:p-6">
+              <TicketForm onSubmit={refreshTickets} />
+            </div>
+          )}
+        </div>
+
+        {/* Feedback Section */}
+        <div className="bg-white rounded-xl shadow-sm">
+          <SectionHeader title="Feedback" section="feedback" />
+          {expandedSections.feedback && (
+            <div className="p-4 sm:p-6">
+              <FeedbackSection />
+            </div>
+          )}
+        </div>
       </div>
 
-      <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
+      {/* Floating Feedback Button */}
+      <div className="fixed bottom-6 right-6">
+        <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
+      </div>
 
+      {/* Feedback Modal */}
       <FeedbackModal
         isOpen={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
