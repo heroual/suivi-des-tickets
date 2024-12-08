@@ -15,26 +15,24 @@ export function generateExcelTemplate() {
       technician: 'BRAHIM',
       delaiRespect: true,
       motifCloture: 'Réparation effectuée'
+    },
+    {
+      ndLogin: 'ND789012',
+      serviceType: 'FIXE',
+      dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
+      dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
+      description: 'Pas de tonalité',
+      cause: 'Problème ligne',
+      causeType: 'Technique',
+      technician: 'ABDERAHMAN',
+      delaiRespect: false,
+      motifCloture: 'Remplacement équipement'
     }
   ];
 
   const ws = XLSX.utils.json_to_sheet(template);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Template');
-
-  // Add column headers with format instructions
-  XLSX.utils.sheet_add_aoa(ws, [[
-    'ND/Login',
-    'Type de Service',
-    'Date de Création (DD/MM/YYYY HH:mm)',
-    'Date de Clôture (DD/MM/YYYY HH:mm)',
-    'Description',
-    'Cause',
-    'Type de Cause',
-    'Technicien',
-    'Délai Respecté',
-    'Motif de Clôture'
-  ]], { origin: 'A1' });
 
   // Add data validations
   ws['!datavalidation'] = {
@@ -76,8 +74,8 @@ export function generateExcelTemplate() {
   ws['!cols'] = [
     { wch: 15 }, // ndLogin
     { wch: 12 }, // serviceType
-    { wch: 25 }, // dateCreation (wider for format)
-    { wch: 25 }, // dateCloture (wider for format)
+    { wch: 20 }, // dateCreation
+    { wch: 20 }, // dateCloture
     { wch: 40 }, // description
     { wch: 30 }, // cause
     { wch: 12 }, // causeType
@@ -85,10 +83,6 @@ export function generateExcelTemplate() {
     { wch: 12 }, // delaiRespect
     { wch: 40 }  // motifCloture
   ];
-
-  // Add comments to date columns
-  ws['C1'].c = [{ a: 'Auteur', t: 'Format requis: DD/MM/YYYY HH:mm\nExemple: 04/12/2024 10:49' }];
-  ws['D1'].c = [{ a: 'Auteur', t: 'Format requis: DD/MM/YYYY HH:mm\nExemple: 04/12/2024 10:49' }];
 
   XLSX.writeFile(wb, 'template_tickets.xlsx');
 }
