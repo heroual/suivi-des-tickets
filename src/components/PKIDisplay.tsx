@@ -8,11 +8,11 @@ interface PKIDisplayProps {
 }
 
 export default function PKIDisplay({ stats, isMonthly = false }: PKIDisplayProps) {
-  const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
+  const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
   const getScoreColor = (value: number) => {
-    if (value >= 0.9) return 'text-green-600';
-    if (value >= 0.7) return 'text-amber-600';
+    if (value >= 90) return 'text-green-600';
+    if (value >= 70) return 'text-amber-600';
     return 'text-red-600';
   };
 
@@ -42,8 +42,8 @@ export default function PKIDisplay({ stats, isMonthly = false }: PKIDisplayProps
             <span className="text-sm font-medium text-green-700">Taux de Résolution</span>
             <TrendingUp className="w-5 h-5 text-green-600" />
           </div>
-          <div className={`text-2xl font-bold ${getScoreColor(stats.resolutionRate)}`}>
-            {formatPercent(stats.resolutionRate)}
+          <div className={`text-2xl font-bold ${getScoreColor(stats.resolutionRate * 100)}`}>
+            {formatPercent(stats.resolutionRate * 100)}
           </div>
         </div>
 
@@ -52,8 +52,8 @@ export default function PKIDisplay({ stats, isMonthly = false }: PKIDisplayProps
             <span className="text-sm font-medium text-amber-700">Respect des Délais</span>
             <Clock className="w-5 h-5 text-amber-600" />
           </div>
-          <div className={`text-2xl font-bold ${getScoreColor(stats.delaiRespectRate)}`}>
-            {formatPercent(stats.delaiRespectRate)}
+          <div className={`text-2xl font-bold ${getScoreColor(stats.delaiRespectRate * 100)}`}>
+            {formatPercent(stats.delaiRespectRate * 100)}
           </div>
         </div>
 
@@ -62,8 +62,8 @@ export default function PKIDisplay({ stats, isMonthly = false }: PKIDisplayProps
             <span className="text-sm font-medium text-purple-700">Stabilité (Non-réouverture)</span>
             <RefreshCw className="w-5 h-5 text-purple-600" />
           </div>
-          <div className={`text-2xl font-bold ${getScoreColor(1 - stats.reopenRate)}`}>
-            {formatPercent(1 - stats.reopenRate)}
+          <div className={`text-2xl font-bold ${getScoreColor((1 - stats.reopenRate) * 100)}`}>
+            {formatPercent((1 - stats.reopenRate) * 100)}
           </div>
         </div>
       </div>
