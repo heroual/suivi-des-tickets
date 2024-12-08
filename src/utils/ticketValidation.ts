@@ -6,9 +6,29 @@ const VALID_CAUSE_TYPES: CauseType[] = ['Technique', 'Client', 'Casse'];
 const VALID_TECHNICIANS: Technician[] = ['BRAHIM', 'ABDERAHMAN', 'AXE'];
 
 export function validateTicketData(data: any): Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> {
-  // Parse dates
-  const dateCreation = parseDate(data.dateCreation);
-  const dateCloture = data.dateCloture ? parseDate(data.dateCloture) : undefined;
+  // Parse dates with specific format DD/MM/YYYY HH:mm
+  let dateCreation: Date;
+  let dateCloture: Date | undefined;
+
+  try {
+    dateCreation = parse(data.dateCreation, 'dd/MM/yyyy HH:mm', new Date());
+    if (isNaN(dateCreation.getTime())) {
+      throw new Error('Date de création invalide');
+    }
+  } catch (error) {
+    throw new Error('Format de date de création invalide. Utilisez le format: DD/MM/YYYY HH:mm (exemple: 04/12/2024 10:49)');
+  }
+
+  if (data.dateCloture) {
+    try {
+      dateCloture = parse(data.dateCloture, 'dd/MM/yyyy HH:mm', new Date());
+      if (isNaN(dateCloture.getTime())) {
+        throw new Error('Date de clôture invalide');
+      }
+    } catch (error) {
+      throw new Error('Format de date de clôture invalide. Utilisez le format: DD/MM/YYYY HH:mm (exemple: 04/12/2024 10:49)');
+    }
+  }
 
   // Validate service type
   if (!VALID_SERVICE_TYPES.includes(data.serviceType)) {
@@ -38,16 +58,4 @@ export function validateTicketData(data: any): Omit<Ticket, 'id' | 'reopened' | 
     delaiRespect: Boolean(data.delaiRespect),
     motifCloture: String(data.motifCloture || '')
   };
-}
-
-function parseDate(dateStr: string): Date {
-  try {
-    const date = parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
-    if (isNaN(date.getTime())) {
-      throw new Error('Date invalide');
-    }
-    return date;
-  } catch (error) {
-    throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
-  }
 }
