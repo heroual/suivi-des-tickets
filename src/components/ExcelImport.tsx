@@ -6,6 +6,7 @@ import { parse, format } from 'date-fns';
 import { addMultipleTickets } from '../services/firebase';
 import { validateTicketData } from '../utils/ticketValidation';
 import { generateExcelTemplate } from '../utils/excelTemplate';
+import type { ImportError } from '../services/firebase/tickets';
 
 interface ExcelImportProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface ExcelImportProps {
 interface ImportStatus {
   type: 'success' | 'error' | 'warning';
   message: string;
+  errors?: ImportError[];
 }
 
 export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportProps) {
@@ -38,29 +40,29 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
       const tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[] = [];
-      const errors: string[] = [];
 
+      // First pass - validate all data
+      const validationErrors: ImportError[] = [];
       jsonData.forEach((row: any, index) => {
         try {
           const validatedTicket = validateTicketData(row);
           tickets.push(validatedTicket);
         } catch (error) {
-          errors.push(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de format'}`);
+          validationErrors.push({
+            row: index + 2,
+            ndLogin: row.ndLogin,
+            field: 'validation',
+            message: error instanceof Error ? error.message : 'Erreur de validation',
+            value: JSON.stringify(row)
+          });
         }
       });
 
-      if (errors.length > 0) {
+      if (validationErrors.length > 0) {
         setStatus({
           type: 'error',
-          message: `Erreurs détectées:\n${errors.join('\n')}`,
-        });
-        return;
-      }
-
-      if (tickets.length === 0) {
-        setStatus({
-          type: 'error',
-          message: 'Aucun ticket valide trouvé dans le fichier',
+          message: 'Des erreurs de validation ont été détectées',
+          errors: validationErrors
         });
         return;
       }
@@ -68,20 +70,18 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       // Import tickets to database
       const result = await addMultipleTickets(tickets);
       
-      let message = `${result.success} tickets importés avec succès`;
-      let type: ImportStatus['type'] = 'success';
-
-      if (result.duplicates > 0) {
-        message += `\n${result.duplicates} tickets ignorés (déjà existants)`;
-        type = 'warning';
+      if (result.failed.length > 0 || result.duplicates > 0) {
+        setStatus({
+          type: 'warning',
+          message: `Import partiellement réussi:\n${result.success} tickets importés\n${result.duplicates} doublons ignorés\n${result.failed.length} erreurs`,
+          errors: result.failed
+        });
+      } else {
+        setStatus({
+          type: 'success',
+          message: `${result.success} tickets importés avec succès`
+        });
       }
-
-      if (result.failed.length > 0) {
-        message += `\n${result.failed.length} tickets non importés en raison d'erreurs`;
-        type = 'warning';
-      }
-
-      setStatus({ type, message });
       
       if (result.success > 0) {
         onImport();
@@ -92,6 +92,11 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       setStatus({
         type: 'error',
         message: 'Erreur lors de la lecture du fichier Excel',
+        errors: [{
+          row: 0,
+          field: 'file',
+          message: error instanceof Error ? error.message : 'Erreur inconnue'
+        }]
       });
     } finally {
       setLoading(false);
@@ -198,13 +203,45 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-2" />
                   )}
-                  <p className={`text-sm whitespace-pre-line ${
-                    status.type === 'success' ? 'text-green-700' :
-                    status.type === 'warning' ? 'text-yellow-700' :
-                    'text-red-700'
-                  }`}>
-                    {status.message}
-                  </p>
+                  <div className="flex-1">
+                    <p className={`text-sm whitespace-pre-line ${
+                      status.type === 'success' ? 'text-green-700' :
+                      status.type === 'warning' ? 'text-yellow-700' :
+                      'text-red-700'
+                    }`}>
+                      {status.message}
+                    </p>
+                    
+                    {status.errors && status.errors.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="font-medium mb-2">Détails des erreurs :</h4>
+                        <div className="max-h-60 overflow-y-auto">
+                          <table className="min-w-full text-sm">
+                            <thead>
+                              <tr>
+                                <th className="text-left">Ligne</th>
+                                <th className="text-left">ND/Login</th>
+                                <th className="text-left">Champ</th>
+                                <th className="text-left">Message</th>
+                                <th className="text-left">Valeur</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {status.errors.map((error, index) => (
+                                <tr key={index} className="border-t border-gray-200">
+                                  <td className="py-2">{error.row}</td>
+                                  <td className="py-2">{error.ndLogin || '-'}</td>
+                                  <td className="py-2">{error.field}</td>
+                                  <td className="py-2">{error.message}</td>
+                                  <td className="py-2">{error.value || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

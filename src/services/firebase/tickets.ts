@@ -44,16 +44,26 @@ export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
   }
 }
 
-export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<{ 
+export interface ImportError {
+  row: number;
+  ndLogin?: string;
+  field: string;
+  message: string;
+  value?: string;
+}
+
+export interface ImportResult {
   success: number;
-  failed: { index: number; error: string }[];
+  failed: ImportError[];
   duplicates: number;
-}> {
+}
+
+export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<ImportResult> {
   if (!auth.currentUser) throw new Error('User not authenticated');
 
-  const results = {
+  const results: ImportResult = {
     success: 0,
-    failed: [] as { index: number; error: string }[],
+    failed: [],
     duplicates: 0
   };
 
@@ -77,6 +87,12 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
           const exists = await checkTicketExists(validatedTicket.ndLogin, validatedTicket.dateCreation);
           if (exists) {
             results.duplicates++;
+            results.failed.push({
+              row: chunkIndex * chunkSize + ticketIndex + 2, // +2 for Excel row number (header + 1-based index)
+              ndLogin: validatedTicket.ndLogin,
+              field: 'duplicate',
+              message: 'Un ticket existe déjà avec ce ND/Login à cette date'
+            });
             continue;
           }
 
@@ -94,9 +110,31 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
           });
         } catch (error) {
           const globalIndex = chunkIndex * chunkSize + ticketIndex;
+          let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          let field = 'unknown';
+          let value;
+
+          // Parse the error message to identify the problematic field
+          if (errorMessage.includes('service')) {
+            field = 'serviceType';
+            value = ticket.serviceType;
+          } else if (errorMessage.includes('date')) {
+            field = errorMessage.toLowerCase().includes('création') ? 'dateCreation' : 'dateCloture';
+            value = field === 'dateCreation' ? ticket.dateCreation : ticket.dateCloture;
+          } else if (errorMessage.includes('technicien')) {
+            field = 'technician';
+            value = ticket.technician;
+          } else if (errorMessage.includes('cause')) {
+            field = 'causeType';
+            value = ticket.causeType;
+          }
+
           results.failed.push({
-            index: globalIndex,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            row: globalIndex + 2, // +2 for Excel row number (header + 1-based index)
+            ndLogin: ticket.ndLogin,
+            field,
+            message: errorMessage,
+            value: value?.toString()
           });
         }
       }
