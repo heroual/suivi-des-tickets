@@ -1,4 +1,3 @@
-import { parse } from 'date-fns';
 import type { Ticket, ServiceType, CauseType, Technician } from '../types';
 
 const VALID_SERVICE_TYPES: ServiceType[] = ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'];
@@ -7,8 +6,31 @@ const VALID_TECHNICIANS: Technician[] = ['BRAHIM', 'ABDERAHMAN', 'AXE'];
 
 export function validateTicketData(data: any): Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> {
   // Parse dates
-  const dateCreation = parseDate(data.dateCreation);
-  const dateCloture = data.dateCloture ? parseDate(data.dateCloture) : undefined;
+  let dateCreation: Date;
+  let dateCloture: Date | undefined;
+
+  try {
+    // Try to parse the date string or use the provided Date object
+    dateCreation = data.dateCreation instanceof Date ? 
+      data.dateCreation : 
+      new Date(data.dateCreation);
+
+    if (data.dateCloture) {
+      dateCloture = data.dateCloture instanceof Date ?
+        data.dateCloture :
+        new Date(data.dateCloture);
+    }
+
+    // Validate dates are valid
+    if (isNaN(dateCreation.getTime())) {
+      throw new Error('Date de création invalide');
+    }
+    if (dateCloture && isNaN(dateCloture.getTime())) {
+      throw new Error('Date de clôture invalide');
+    }
+  } catch (error) {
+    throw new Error(`Erreur de format de date: ${error.message}`);
+  }
 
   // Validate service type
   if (!VALID_SERVICE_TYPES.includes(data.serviceType)) {
@@ -38,16 +60,4 @@ export function validateTicketData(data: any): Omit<Ticket, 'id' | 'reopened' | 
     delaiRespect: Boolean(data.delaiRespect),
     motifCloture: String(data.motifCloture || '')
   };
-}
-
-function parseDate(dateStr: string): Date {
-  try {
-    const date = parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
-    if (isNaN(date.getTime())) {
-      throw new Error('Date invalide');
-    }
-    return date;
-  } catch (error) {
-    throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
-  }
 }

@@ -1,14 +1,12 @@
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
 
 export function generateExcelTemplate() {
-  const now = new Date();
   const template = [
     {
       ndLogin: 'ND123456',
       serviceType: 'FIBRE',
-      dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
-      dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
+      dateCreation: '24/11/2024 20:45',
+      dateCloture: '24/11/2024 21:30',
       description: 'Problème de connexion',
       cause: 'Coupure fibre',
       causeType: 'Technique',
@@ -19,8 +17,8 @@ export function generateExcelTemplate() {
     {
       ndLogin: 'ND789012',
       serviceType: 'FIXE',
-      dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
-      dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
+      dateCreation: '24/11/2024 20:45',
+      dateCloture: '24/11/2024 21:30',
       description: 'Pas de tonalité',
       cause: 'Problème ligne',
       causeType: 'Technique',

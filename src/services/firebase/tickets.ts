@@ -88,7 +88,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
           if (exists) {
             results.duplicates++;
             results.failed.push({
-              row: chunkIndex * chunkSize + ticketIndex + 2, // +2 for Excel row number (header + 1-based index)
+              row: chunkIndex * chunkSize + ticketIndex + 2,
               ndLogin: validatedTicket.ndLogin,
               field: 'duplicate',
               message: 'Un ticket existe déjà avec ce ND/Login à cette date'
@@ -130,7 +130,7 @@ export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened'
           }
 
           results.failed.push({
-            row: globalIndex + 2, // +2 for Excel row number (header + 1-based index)
+            row: globalIndex + 2,
             ndLogin: ticket.ndLogin,
             field,
             message: errorMessage,
