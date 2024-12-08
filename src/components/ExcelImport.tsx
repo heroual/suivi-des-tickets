@@ -312,3 +312,144 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     </div>
   );
 }
+import React, { useState } from 'react';
+import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Loader } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import type { Ticket } from '../types';
+import { parse, format } from 'date-fns';
+import { addMultipleTickets } from '../services/firebase';
+
+interface ExcelImportProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onImport: () => void;
+}
+
+interface ImportStatus {
+  type: 'success' | 'error' | 'warning';
+  message: string;
+}
+
+export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportProps) {
+  const [status, setStatus] = useState<ImportStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  if (!isOpen) return null;
+
+  const parseDate = (dateStr: string) => {
+    try {
+      return parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
+    } catch (error) {
+      throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
+    }
+  };
+
+  const validateTicket = (row: any): boolean => {
+    return (
+      row.ndLogin &&
+      ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'].includes(row.serviceType) &&
+      row.description &&
+      row.cause &&
+      ['Technique', 'Client', 'Casse'].includes(row.causeType) &&
+      ['BRAHIM', 'ABDERAHMAN', 'AXE'].includes(row.technician) &&
+      row.dateCreation &&
+      row.dateCloture &&
+      row.delaiRespect !== undefined &&
+      row.motifCloture &&
+      row.isReopened !== undefined
+    );
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setStatus(null);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[] = [];
+      const errors: string[] = [];
+
+      jsonData.forEach((row: any, index) => {
+        if (!validateTicket(row)) {
+          errors.push(`Ligne ${index + 2}: Données invalides ou manquantes`);
+          return;
+        }
+
+        try {
+          tickets.push({
+            ndLogin: row.ndLogin,
+            serviceType: row.serviceType,
+            description: row.description,
+            cause: row.cause,
+            causeType: row.causeType,
+            technician: row.technician,
+            dateCreation: parseDate(row.dateCreation),
+            dateCloture: parseDate(row.dateCloture),
+            status: 'CLOTURE',
+            delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
+            motifCloture: row.motifCloture,
+            reopened: row.isReopened === 'true' || row.isReopened === true,
+            reopenCount: row.isReopened === 'true' || row.isReopened === true ? 1 : 0
+          });
+        } catch (error) {
+          errors.push(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de format'}`);
+        }
+      });
+
+      if (errors.length > 0) {
+        setStatus({
+          type: 'error',
+          message: `Erreurs détectées:\n${errors.join('\n')}`,
+        });
+        return;
+      }
+
+      if (tickets.length === 0) {
+        setStatus({
+          type: 'error',
+          message: 'Aucun ticket valide trouvé dans le fichier',
+        });
+        return;
+      }
+
+      // Import tickets to database
+      const result = await addMultipleTickets(tickets);
+      
+      let message = `${result.success} tickets importés avec succès`;
+      let type: ImportStatus['type'] = 'success';
+
+      if (result.duplicates > 0) {
+        message += `\n${result.duplicates} tickets ignorés (déjà existants)`;
+        type = 'warning';
+      }
+
+      if (result.failed.length > 0) {
+        message += `\n${result.failed.length} tickets non importés en raison d'erreurs`;
+        type = 'warning';
+      }
+
+      setStatus({ type, message });
+      
+      if (result.success > 0) {
+        onImport(); // Refresh tickets list
+      }
+
+      e.target.value = '';
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: 'Erreur lors de la lecture du fichier Excel',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Rest of the component remains unchanged...
