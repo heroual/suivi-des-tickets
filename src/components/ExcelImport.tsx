@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Loader } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import type { Ticket, ServiceType, Technician, CauseType } from '../types';
+import type { Ticket } from '../types';
 import { parse, format } from 'date-fns';
-import { useAuth } from '../hooks/useAuth';
-import AccessDeniedMessage from './AccessDeniedMessage';
-import { addMultipleTickets } from '../services/firebase';
 
 interface ExcelImportProps {
   isOpen: boolean;
@@ -14,119 +11,44 @@ interface ExcelImportProps {
 }
 
 interface ImportStatus {
-  type: 'success' | 'error' | 'warning';
+  type: 'success' | 'error';
   message: string;
-  details?: string[];
 }
 
 export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportProps) {
-  const { isAdmin } = useAuth();
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  if (!isAdmin) {
-    return <AccessDeniedMessage />;
-  }
 
   if (!isOpen) return null;
 
   const parseDate = (dateStr: string) => {
     try {
-      // Try different date formats
-      const formats = [
-        'dd/MM/yyyy HH:mm',
-        'dd/MM/yyyy',
-        'yyyy-MM-dd HH:mm',
-        'yyyy-MM-dd',
-        'MM/dd/yyyy HH:mm',
-        'MM/dd/yyyy'
-      ];
-
-      for (const formatStr of formats) {
-        try {
-          const date = parse(dateStr, formatStr, new Date());
-          if (!isNaN(date.getTime())) {
-            return date;
-          }
-        } catch {}
-      }
-
-      throw new Error(`Format de date invalide: ${dateStr}`);
+      return parse(dateStr, 'dd/MM/yyyy HH:mm', new Date());
     } catch (error) {
-      throw new Error(`Format de date invalide: ${dateStr}. Formats acceptés: JJ/MM/AAAA HH:mm ou JJ/MM/AAAA`);
+      throw new Error(`Format de date invalide: ${dateStr}. Utilisez le format JJ/MM/AAAA HH:mm`);
     }
   };
 
-  const validateServiceType = (value: string): ServiceType => {
-    const validTypes: ServiceType[] = ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'];
-    const normalized = value.toUpperCase();
-    if (validTypes.includes(normalized as ServiceType)) {
-      return normalized as ServiceType;
-    }
-    throw new Error(`Type de service invalide: ${value}. Valeurs acceptées: FIBRE, ADSL, DEGROUPAGE, FIXE`);
-  };
-
-  const validateTechnician = (value: string): Technician => {
-    const validTechnicians: Technician[] = ['BRAHIM', 'ABDERAHMAN', 'AXE'];
-    const normalized = value.toUpperCase();
-    if (validTechnicians.includes(normalized as Technician)) {
-      return normalized as Technician;
-    }
-    throw new Error(`Technicien invalide: ${value}. Valeurs acceptées: BRAHIM, ABDERAHMAN, AXE`);
-  };
-
-  const validateCauseType = (value: string): CauseType => {
-    const validTypes: CauseType[] = ['Technique', 'Client', 'Casse'];
-    if (validTypes.includes(value)) {
-      return value as CauseType;
-    }
-    throw new Error(`Type de cause invalide: ${value}. Valeurs acceptées: Technique, Client, Casse`);
-  };
-
-  const validateBoolean = (value: any): boolean => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.toLowerCase();
-      if (normalized === 'true' || normalized === 'oui' || normalized === '1') return true;
-      if (normalized === 'false' || normalized === 'non' || normalized === '0') return false;
-    }
-    if (typeof value === 'number') return value === 1;
-    throw new Error(`Valeur booléenne invalide: ${value}. Utilisez true/false, oui/non, ou 1/0`);
-  };
-
-  const validateTicket = (row: any, index: number): Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> => {
-    try {
-      if (!row['ND/Login'] || !row['Service'] || !row['Description'] || !row['Cause'] || 
-          !row['Type Cause'] || !row['Technicien'] || !row['Date Création']) {
-        throw new Error('Champs obligatoires manquants');
-      }
-
-      const ticket: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'> = {
-        ndLogin: String(row['ND/Login']),
-        serviceType: validateServiceType(String(row['Service'])),
-        description: String(row['Description']),
-        cause: String(row['Cause']),
-        causeType: validateCauseType(String(row['Type Cause'])),
-        technician: validateTechnician(String(row['Technicien'])),
-        dateCreation: parseDate(String(row['Date Création'])),
-        dateCloture: row['Date Clôture'] ? parseDate(String(row['Date Clôture'])) : undefined,
-        status: row['Status']?.toUpperCase() === 'CLOTURE' ? 'CLOTURE' : 'EN_COURS',
-        delaiRespect: validateBoolean(row['Délai Respecté'] ?? true),
-        motifCloture: row['Motif Clôture'] ? String(row['Motif Clôture']) : ''
-      };
-
-      return ticket;
-    } catch (error) {
-      throw new Error(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de validation'}`);
-    }
+  const validateTicket = (row: any): boolean => {
+    return (
+      row.ndLogin &&
+      ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'].includes(row.serviceType) &&
+      row.description &&
+      row.cause &&
+      ['Technique', 'Client', 'Casse'].includes(row.causeType) &&
+      ['BRAHIM', 'ABDERAHMAN', 'AXE'].includes(row.technician) &&
+      row.dateCreation &&
+      row.dateCloture &&
+      row.delaiRespect !== undefined &&
+      row.motifCloture &&
+      row.isReopened !== undefined
+    );
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
     setLoading(true);
     setStatus(null);
 
@@ -140,19 +62,36 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       const errors: string[] = [];
 
       jsonData.forEach((row: any, index) => {
+        if (!validateTicket(row)) {
+          errors.push(`Ligne ${index + 2}: Données invalides ou manquantes`);
+          return;
+        }
+
         try {
-          const ticket = validateTicket(row, index);
-          tickets.push(ticket);
+          tickets.push({
+            ndLogin: row.ndLogin,
+            serviceType: row.serviceType,
+            description: row.description,
+            cause: row.cause,
+            causeType: row.causeType,
+            technician: row.technician,
+            dateCreation: parseDate(row.dateCreation),
+            dateCloture: parseDate(row.dateCloture),
+            status: 'CLOTURE',
+            delaiRespect: row.delaiRespect === 'true' || row.delaiRespect === true,
+            motifCloture: row.motifCloture,
+            reopened: row.isReopened === 'true' || row.isReopened === true,
+            reopenCount: row.isReopened === 'true' || row.isReopened === true ? 1 : 0
+          });
         } catch (error) {
-          errors.push(error instanceof Error ? error.message : `Ligne ${index + 2}: Erreur inconnue`);
+          errors.push(`Ligne ${index + 2}: ${error instanceof Error ? error.message : 'Erreur de format'}`);
         }
       });
 
-      if (errors.length > 0 && tickets.length === 0) {
+      if (errors.length > 0) {
         setStatus({
           type: 'error',
-          message: 'Erreurs détectées dans le fichier:',
-          details: errors
+          message: `Erreurs détectées:\n${errors.join('\n')}`,
         });
         return;
       }
@@ -160,36 +99,22 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
       if (tickets.length === 0) {
         setStatus({
           type: 'error',
-          message: 'Aucun ticket valide trouvé dans le fichier'
+          message: 'Aucun ticket valide trouvé dans le fichier',
         });
         return;
       }
 
-      // Add tickets to database
-      const result = await addMultipleTickets(tickets);
-      
-      // Call onImport callback
-      await onImport(tickets);
-
-      if (result.failed.length > 0) {
-        setStatus({
-          type: 'warning',
-          message: `${result.success} tickets importés avec succès, ${result.failed.length} échecs`,
-          details: result.failed.map(f => `Ligne ${f.index + 2}: ${f.error}`)
-        });
-      } else {
-        setStatus({
-          type: 'success',
-          message: `${result.success} tickets importés avec succès`
-        });
-      }
+      onImport(tickets);
+      setStatus({
+        type: 'success',
+        message: `${tickets.length} tickets importés avec succès`,
+      });
 
       e.target.value = '';
-      setSelectedFile(null);
     } catch (error) {
       setStatus({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Erreur lors de l\'importation'
+        message: 'Erreur lors de la lecture du fichier Excel',
       });
     } finally {
       setLoading(false);
@@ -200,17 +125,30 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const now = new Date();
     const template = [
       {
-        'ND/Login': 'ND123456',
-        'Service': 'FIBRE',
-        'Date Création': format(now, 'dd/MM/yyyy HH:mm'),
-        'Date Clôture': format(now, 'dd/MM/yyyy HH:mm'),
-        'Description': 'Problème de connexion',
-        'Cause': 'Coupure fibre',
-        'Type Cause': 'Technique',
-        'Technicien': 'BRAHIM',
-        'Délai Respecté': true,
-        'Status': 'CLOTURE',
-        'Motif Clôture': 'Réparation effectuée'
+        ndLogin: 'ND123456',
+        serviceType: 'FIBRE',
+        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
+        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
+        description: 'Problème de connexion',
+        cause: 'Coupure fibre',
+        causeType: 'Technique',
+        technician: 'BRAHIM',
+        delaiRespect: true,
+        motifCloture: 'Réparation effectuée',
+        isReopened: false
+      },
+      {
+        ndLogin: 'ND789012',
+        serviceType: 'FIXE',
+        dateCreation: format(now, 'dd/MM/yyyy HH:mm'),
+        dateCloture: format(now, 'dd/MM/yyyy HH:mm'),
+        description: 'Pas de tonalité',
+        cause: 'Problème ligne',
+        causeType: 'Technique',
+        technician: 'ABDERAHMAN',
+        delaiRespect: false,
+        motifCloture: 'Remplacement équipement',
+        isReopened: true
       }
     ];
 
@@ -218,20 +156,41 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
 
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 15 }, // ND/Login
-      { wch: 10 }, // Service
-      { wch: 20 }, // Date Création
-      { wch: 20 }, // Date Clôture
-      { wch: 40 }, // Description
-      { wch: 30 }, // Cause
-      { wch: 15 }, // Type Cause
-      { wch: 15 }, // Technicien
-      { wch: 15 }, // Délai Respecté
-      { wch: 10 }, // Status
-      { wch: 30 }  // Motif Clôture
-    ];
+    // Ajout des validations de données
+    ws['!datavalidation'] = {
+      B2: {
+        type: 'list',
+        operator: 'equal',
+        formula1: '"FIBRE,ADSL,DEGROUPAGE,FIXE"',
+        showErrorMessage: true,
+        error: 'Valeur invalide',
+        errorTitle: 'Erreur'
+      },
+      E2: {
+        type: 'list',
+        operator: 'equal',
+        formula1: '"Technique,Client,Casse"',
+        showErrorMessage: true,
+        error: 'Valeur invalide',
+        errorTitle: 'Erreur'
+      },
+      F2: {
+        type: 'list',
+        operator: 'equal',
+        formula1: '"BRAHIM,ABDERAHMAN,AXE"',
+        showErrorMessage: true,
+        error: 'Valeur invalide',
+        errorTitle: 'Erreur'
+      },
+      K2: {
+        type: 'list',
+        operator: 'equal',
+        formula1: '"true,false"',
+        showErrorMessage: true,
+        error: 'Valeur invalide',
+        errorTitle: 'Erreur'
+      }
+    };
 
     XLSX.writeFile(wb, 'template_tickets.xlsx');
   };
@@ -273,17 +232,17 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                 <div className="flex-shrink-0 bg-white p-4 rounded-lg shadow-sm">
                   <h4 className="font-medium text-gray-900 mb-2">Structure requise :</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• ND/Login (ex: ND123456)</li>
-                    <li>• Service (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
-                    <li>• Date Création (JJ/MM/AAAA HH:mm)</li>
-                    <li>• Date Clôture (JJ/MM/AAAA HH:mm)</li>
-                    <li>• Description (texte)</li>
-                    <li>• Cause (texte)</li>
-                    <li>• Type Cause (Technique/Client/Casse)</li>
-                    <li>• Technicien (BRAHIM/ABDERAHMAN/AXE)</li>
-                    <li>• Délai Respecté (true/false)</li>
-                    <li>• Status (EN_COURS/CLOTURE)</li>
-                    <li>• Motif Clôture (texte)</li>
+                    <li>• ndLogin (ex: ND123456)</li>
+                    <li>• serviceType (FIBRE/ADSL/DEGROUPAGE/FIXE)</li>
+                    <li>• dateCreation (format: JJ/MM/AAAA HH:mm)</li>
+                    <li>• dateCloture (format: JJ/MM/AAAA HH:mm)</li>
+                    <li>• description (texte libre)</li>
+                    <li>• cause (texte libre)</li>
+                    <li>• causeType (Technique/Client/Casse)</li>
+                    <li>• technician (BRAHIM/ABDERAHMAN/AXE)</li>
+                    <li>• delaiRespect (true/false)</li>
+                    <li>• motifCloture (texte libre)</li>
+                    <li>• isReopened (true/false)</li>
                   </ul>
                 </div>
               </div>
@@ -303,13 +262,7 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
                   />
                   <div className="flex flex-col items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
                     {loading ? (
-                      <div className="flex flex-col items-center">
-                        <Loader className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-                        <p className="text-sm text-gray-600">
-                          Importation en cours...
-                          {selectedFile && <span className="ml-1">({selectedFile.name})</span>}
-                        </p>
-                      </div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
                     ) : (
                       <>
                         <Upload className="w-12 h-12 text-blue-600 mb-3" />
@@ -332,39 +285,24 @@ export default function ExcelImport({ isOpen, onClose, onImport }: ExcelImportPr
             {status && (
               <div
                 className={`p-4 rounded-lg ${
-                  status.type === 'success' ? 'bg-green-50 border-l-4 border-green-500' :
-                  status.type === 'warning' ? 'bg-yellow-50 border-l-4 border-yellow-500' :
-                  'bg-red-50 border-l-4 border-red-500'
+                  status.type === 'success'
+                    ? 'bg-green-50 border-l-4 border-green-500'
+                    : 'bg-red-50 border-l-4 border-red-500'
                 }`}
               >
                 <div className="flex items-start">
                   {status.type === 'success' ? (
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 mr-2" />
-                  ) : status.type === 'warning' ? (
-                    <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 mr-2" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-2" />
                   )}
-                  <div>
-                    <p className={`text-sm ${
-                      status.type === 'success' ? 'text-green-700' :
-                      status.type === 'warning' ? 'text-yellow-700' :
-                      'text-red-700'
-                    }`}>
-                      {status.message}
-                    </p>
-                    {status.details && status.details.length > 0 && (
-                      <ul className="mt-2 text-sm space-y-1 list-disc list-inside">
-                        {status.details.map((detail, index) => (
-                          <li key={index} className={
-                            status.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
-                          }>
-                            {detail}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                  <p
+                    className={`text-sm ${
+                      status.type === 'success' ? 'text-green-700' : 'text-red-700'
+                    } whitespace-pre-line`}
+                  >
+                    {status.message}
+                  </p>
                 </div>
               </div>
             )}
