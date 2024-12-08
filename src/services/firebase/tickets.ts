@@ -243,3 +243,174 @@ export async function getImportedTickets(): Promise<Ticket[]> {
     throw error;
   }
 }
+import { addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, writeBatch, Timestamp, collection, where } from 'firebase/firestore';
+import { db, auth } from './config';
+import { ticketsCollection } from './collections';
+import type { Ticket } from '../../types';
+import { nanoid } from 'nanoid';
+
+// Helper function to validate and format ticket data
+function validateTicketData(data: any): Omit<Ticket, 'id'> {
+  const dateCreation = data.dateCreation instanceof Date ? data.dateCreation : new Date(data.dateCreation);
+  const dateCloture = data.dateCloture ? (data.dateCloture instanceof Date ? data.dateCloture : new Date(data.dateCloture)) : undefined;
+
+  if (isNaN(dateCreation.getTime())) {
+    throw new Error(`Invalid creation date: ${data.dateCreation}`);
+  }
+  if (dateCloture && isNaN(dateCloture.getTime())) {
+    throw new Error(`Invalid closure date: ${data.dateCloture}`);
+  }
+
+  // Validate service type
+  const validServiceTypes = ['FIBRE', 'ADSL', 'DEGROUPAGE', 'FIXE'];
+  if (!validServiceTypes.includes(data.serviceType)) {
+    throw new Error(`Invalid service type: ${data.serviceType}`);
+  }
+
+  // Validate cause type
+  const validCauseTypes = ['Technique', 'Client', 'Casse'];
+  if (!validCauseTypes.includes(data.causeType)) {
+    throw new Error(`Invalid cause type: ${data.causeType}`);
+  }
+
+  // Validate technician
+  const validTechnicians = ['BRAHIM', 'ABDERAHMAN', 'AXE'];
+  if (!validTechnicians.includes(data.technician)) {
+    throw new Error(`Invalid technician: ${data.technician}`);
+  }
+
+  return {
+    ndLogin: String(data.ndLogin || ''),
+    serviceType: data.serviceType,
+    dateCreation,
+    dateCloture,
+    description: String(data.description || ''),
+    cause: String(data.cause || ''),
+    causeType: data.causeType,
+    technician: data.technician,
+    status: data.status || 'EN_COURS',
+    delaiRespect: Boolean(data.delaiRespect),
+    reopened: Boolean(data.reopened),
+    reopenCount: Number(data.reopenCount || 0),
+    motifCloture: String(data.motifCloture || '')
+  };
+}
+
+// Helper function to check if ticket already exists
+async function checkTicketExists(ndLogin: string, dateCreation: Date): Promise<boolean> {
+  const q = query(
+    ticketsCollection,
+    where('ndLogin', '==', ndLogin),
+    where('dateCreation', '==', Timestamp.fromDate(dateCreation))
+  );
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty;
+}
+
+export async function addTicket(ticket: Omit<Ticket, 'id'>): Promise<string> {
+  if (!auth.currentUser) throw new Error('User not authenticated');
+
+  try {
+    const validatedTicket = validateTicketData(ticket);
+    
+    // Check if ticket already exists
+    const exists = await checkTicketExists(validatedTicket.ndLogin, validatedTicket.dateCreation);
+    if (exists) {
+      throw new Error('Ticket already exists');
+    }
+
+    const docRef = await addDoc(ticketsCollection, {
+      ...validatedTicket,
+      dateCreation: Timestamp.fromDate(validatedTicket.dateCreation),
+      dateCloture: validatedTicket.dateCloture ? Timestamp.fromDate(validatedTicket.dateCloture) : null,
+      createdAt: Timestamp.now(),
+      userId: auth.currentUser.uid,
+      imported: false,
+      reopened: false,
+      reopenCount: 0
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding ticket:', error);
+    throw error;
+  }
+}
+
+export async function addMultipleTickets(tickets: Omit<Ticket, 'id' | 'reopened' | 'reopenCount'>[]): Promise<{ 
+  success: number;
+  failed: { index: number; error: string }[];
+  duplicates: number;
+}> {
+  if (!auth.currentUser) throw new Error('User not authenticated');
+
+  const results = {
+    success: 0,
+    failed: [] as { index: number; error: string }[],
+    duplicates: 0
+  };
+
+  try {
+    const chunkSize = 500; // Firestore batch limit is 500
+    const chunks = [];
+    for (let i = 0; i < tickets.length; i += chunkSize) {
+      chunks.push(tickets.slice(i, i + chunkSize));
+    }
+
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      const batch = writeBatch(db);
+      const validatedChunk: any[] = [];
+
+      // Validate and check duplicates for each ticket in the chunk
+      for (const [ticketIndex, ticket] of chunk.entries()) {
+        try {
+          const validatedTicket = validateTicketData(ticket);
+          
+          // Check if ticket already exists
+          const exists = await checkTicketExists(validatedTicket.ndLogin, validatedTicket.dateCreation);
+          if (exists) {
+            results.duplicates++;
+            continue;
+          }
+
+          validatedChunk.push({
+            ...validatedTicket,
+            id: nanoid(),
+            dateCreation: Timestamp.fromDate(validatedTicket.dateCreation),
+            dateCloture: validatedTicket.dateCloture ? Timestamp.fromDate(validatedTicket.dateCloture) : null,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+            userId: auth.currentUser.uid,
+            imported: true,
+            reopened: false,
+            reopenCount: 0
+          });
+        } catch (error) {
+          const globalIndex = chunkIndex * chunkSize + ticketIndex;
+          results.failed.push({
+            index: globalIndex,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      // Add valid tickets to batch
+      for (const validTicket of validatedChunk) {
+        const docRef = doc(collection(db, 'tickets'));
+        batch.set(docRef, validTicket);
+        results.success++;
+      }
+
+      // Commit the batch if there are valid tickets
+      if (validatedChunk.length > 0) {
+        await batch.commit();
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error adding multiple tickets:', error);
+    throw error;
+  }
+}
+
+// Rest of the file remains unchanged...
