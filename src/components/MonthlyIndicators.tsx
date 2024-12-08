@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { FileSpreadsheet, Calendar, TrendingUp, Download, Filter, AlertCircle } from 'lucide-react';
 import type { Ticket, CauseType } from '../types';
-import { format, startOfMonth, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
+import { useDateFilter } from '../contexts/DateContext';
 
 interface MonthlyIndicatorsProps {
   tickets: Ticket[];
@@ -21,13 +22,14 @@ interface IndicatorStats {
 
 export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const { selectedDate } = useDateFilter();
 
   const calculateStats = (): IndicatorStats => {
-    const monthStart = startOfMonth(new Date());
-    const today = new Date();
+    const monthStart = startOfMonth(selectedDate);
+    const monthEnd = endOfMonth(selectedDate);
 
     const monthlyTickets = tickets.filter(ticket =>
-      isWithinInterval(ticket.dateCreation, { start: monthStart, end: today })
+      isWithinInterval(ticket.dateCreation, { start: monthStart, end: monthEnd })
     );
 
     const stats: IndicatorStats = {
@@ -55,15 +57,10 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
   const stats = calculateStats();
 
   const exportToExcel = () => {
-    const monthStart = startOfMonth(new Date());
-    const today = new Date();
+    const monthName = format(selectedDate, 'MMMM yyyy', { locale: fr });
     
-    const monthlyTickets = tickets.filter(ticket =>
-      isWithinInterval(ticket.dateCreation, { start: monthStart, end: today })
-    );
-
     const summaryData = [
-      ['Indicateurs Mensuels', `${format(monthStart, 'MMMM yyyy', { locale: fr })}`],
+      ['Indicateurs Mensuels', monthName],
       [''],
       ['Statistiques Générales'],
       ['Total des tickets', stats.total],
@@ -81,8 +78,8 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
       ...Object.entries(stats.byTechnician).map(([tech, count]) => [tech, count])
     ];
 
-    const ticketDetails = monthlyTickets.map(ticket => ({
-      'Date de création': format(ticket.dateCreation, 'dd/MM/yyyy HH:mm'),
+    const ticketDetails = stats.total > 0 ? stats.total : tickets.map(ticket => ({
+      'Date de création': format(new Date(ticket.dateCreation), 'dd/MM/yyyy HH:mm'),
       'ND/Login': ticket.ndLogin,
       'Service': ticket.serviceType,
       'Description': ticket.description,
@@ -101,12 +98,9 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Résumé');
 
     const wsDetails = XLSX.utils.json_to_sheet(ticketDetails);
-    XLSX.utils.book_append_sheet(wb, wsDetails, 'Détails des tickets');
+    XLSX.utils.book_append_sheet(wb, wsDetails, 'Détails');
 
-    wsSummary['!cols'] = [{ wch: 25 }, { wch: 15 }];
-    wsDetails['!cols'] = Array(Object.keys(ticketDetails[0] || {}).length).fill({ wch: 20 });
-
-    XLSX.writeFile(wb, `indicateurs-mensuels-${format(new Date(), 'yyyy-MM')}.xlsx`);
+    XLSX.writeFile(wb, `Indicateurs_${monthName.replace(' ', '_')}.xlsx`);
   };
 
   const getPercentage = (value: number, total: number) => 
@@ -123,7 +117,7 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
                 Indicateurs du Mois
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {format(startOfMonth(new Date()), 'd MMMM', { locale: fr })} au {format(new Date(), 'd MMMM', { locale: fr })}
+                {format(startOfMonth(selectedDate), 'd MMMM', { locale: fr })} au {format(endOfMonth(selectedDate), 'd MMMM', { locale: fr })}
               </p>
             </div>
           </div>

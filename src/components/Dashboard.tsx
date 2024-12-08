@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useTickets } from '../hooks/useTickets';
+import { useDateFilter } from '../contexts/DateContext';
 import PKIDisplay from './PKIDisplay';
 import Documentation from './Documentation';
 import AppInfo from './AppInfo';
@@ -17,12 +18,13 @@ import FeedbackModal from './FeedbackModal';
 import FeedbackSection from './FeedbackSection';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, isSameMonth } from 'date-fns';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { tickets, loading, error, refreshTickets } = useTickets();
+  const { selectedDate } = useDateFilter();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     criticalTickets: true,
@@ -54,14 +56,14 @@ export default function Dashboard() {
     );
   }
 
-  // Calculate monthly PKI
-  const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const monthlyTickets = tickets.filter(ticket => 
-    ticket.dateCreation >= monthStart && 
-    ticket.dateCreation <= monthEnd
-  );
+  // Filter tickets for selected month
+  const monthStart = startOfMonth(selectedDate);
+  const monthEnd = endOfMonth(selectedDate);
+  const monthlyTickets = tickets.filter(ticket => {
+    const ticketDate = new Date(ticket.dateCreation);
+    return ticketDate >= monthStart && ticketDate <= monthEnd;
+  });
+
   const monthlyPKI = calculatePKI(monthlyTickets);
 
   const SectionHeader = ({ title, section }: { title: string; section: keyof typeof expandedSections }) => (
@@ -92,19 +94,19 @@ export default function Dashboard() {
         {/* Monthly Indicators */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Indicateurs Mensuels</h2>
-          <MonthlyIndicators tickets={tickets} />
+          <MonthlyIndicators tickets={monthlyTickets} />
         </div>
 
         {/* Monthly Stats */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistiques Mensuelles</h2>
-          <MonthlyStats tickets={tickets} />
+          <MonthlyStats tickets={monthlyTickets} />
         </div>
 
         {/* Causes and Suggestions */}
         <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Analyse des Causes</h2>
-          <CausesSuggestions tickets={tickets} />
+          <CausesSuggestions tickets={monthlyTickets} />
         </div>
 
         {/* Critical Cable Tickets Section */}
@@ -113,7 +115,7 @@ export default function Dashboard() {
           {expandedSections.criticalTickets && (
             <div className="p-4 sm:p-6">
               <CriticalCableTickets 
-                tickets={tickets}
+                tickets={monthlyTickets}
                 onAddTicket={refreshTickets}
                 onUpdateTicket={refreshTickets}
                 onDeleteTicket={refreshTickets}
@@ -127,7 +129,7 @@ export default function Dashboard() {
           <SectionHeader title="Plan d'Action" section="actionPlan" />
           {expandedSections.actionPlan && (
             <div className="p-4 sm:p-6">
-              <ActionPlan tickets={tickets} />
+              <ActionPlan tickets={monthlyTickets} />
             </div>
           )}
         </div>
