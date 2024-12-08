@@ -4,9 +4,10 @@ import type { PKIStats } from '../types';
 
 interface PKIDisplayProps {
   stats: PKIStats;
+  isMonthly?: boolean;
 }
 
-export default function PKIDisplay({ stats }: PKIDisplayProps) {
+export default function PKIDisplay({ stats, isMonthly = false }: PKIDisplayProps) {
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
   const getScoreColor = (value: number) => {
@@ -19,7 +20,7 @@ export default function PKIDisplay({ stats }: PKIDisplayProps) {
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 className="text-xl font-semibold mb-4 flex items-center">
         <Target className="w-6 h-6 text-blue-600 mr-2" />
-        Indicateurs de Performance (PKI)
+        {isMonthly ? 'PKI du Mois' : 'Indicateurs de Performance (PKI)'}
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -31,6 +32,9 @@ export default function PKIDisplay({ stats }: PKIDisplayProps) {
           <div className={`text-2xl font-bold ${getScoreColor(stats.globalPKI)}`}>
             {formatPercent(stats.globalPKI)}
           </div>
+          {isMonthly && (
+            <p className="text-sm text-blue-600 mt-1">Objectif: 75%</p>
+          )}
         </div>
 
         <div className="bg-green-50 rounded-lg p-4">

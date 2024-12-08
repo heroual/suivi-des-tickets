@@ -14,8 +14,10 @@ import MonthlyStats from './MonthlyStats';
 import TicketForm from './TicketForm';
 import FeedbackButton from './FeedbackButton';
 import FeedbackModal from './FeedbackModal';
+import FeedbackSection from './FeedbackSection';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -30,10 +32,20 @@ export default function Dashboard() {
     return <ErrorMessage message={error} onRetry={refreshTickets} />;
   }
 
+  // Calculate monthly PKI
+  const today = new Date();
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
+  const monthlyTickets = tickets.filter(ticket => 
+    ticket.dateCreation >= monthStart && 
+    ticket.dateCreation <= monthEnd
+  );
+  const monthlyPKI = calculatePKI(monthlyTickets);
+
   return (
     <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <DateBar />
-      <PKIDisplay stats={calculatePKI(tickets)} />
+      <PKIDisplay stats={monthlyPKI} isMonthly={true} />
       <MonthlyIndicators tickets={tickets} />
       <MonthlyStats tickets={tickets} />
       <CausesSuggestions tickets={tickets} />
@@ -50,6 +62,7 @@ export default function Dashboard() {
       
       <div className="space-y-6">
         <TicketForm onSubmit={refreshTickets} />
+        <FeedbackSection />
       </div>
 
       <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
