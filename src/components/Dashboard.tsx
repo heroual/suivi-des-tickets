@@ -68,23 +68,23 @@ export default function Dashboard() {
 
   const SectionHeader = ({ title, section }: { title: string; section: keyof typeof expandedSections }) => (
     <div 
-      className="flex items-center justify-between bg-white p-4 rounded-t-xl shadow-sm cursor-pointer hover:bg-gray-50"
+      className="flex items-center justify-between bg-white dark:bg-dark p-4 rounded-t-xl shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-100"
       onClick={() => toggleSection(section)}
     >
-      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
       {expandedSections[section] ? (
-        <ChevronUp className="w-5 h-5 text-gray-500" />
+        <ChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />
       ) : (
-        <ChevronDown className="w-5 h-5 text-gray-500" />
+        <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
       )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Top Section - Always Visible */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm p-4 sm:p-6">
           <DateBar />
           <div className="mt-6">
             <PKIDisplay stats={monthlyPKI} isMonthly={true} />
@@ -92,25 +92,25 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Indicators */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Indicateurs Mensuels</h2>
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Indicateurs Mensuels</h2>
           <MonthlyIndicators tickets={monthlyTickets} />
         </div>
 
         {/* Monthly Stats */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistiques Mensuelles</h2>
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Statistiques Mensuelles</h2>
           <MonthlyStats tickets={monthlyTickets} />
         </div>
 
         {/* Causes and Suggestions */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Analyse des Causes</h2>
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Analyse des Causes</h2>
           <CausesSuggestions tickets={monthlyTickets} />
         </div>
 
         {/* Critical Cable Tickets Section */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm">
           <SectionHeader title="Tickets Câbles Critiques" section="criticalTickets" />
           {expandedSections.criticalTickets && (
             <div className="p-4 sm:p-6">
@@ -125,7 +125,7 @@ export default function Dashboard() {
         </div>
 
         {/* Action Plan Section */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm">
           <SectionHeader title="Plan d'Action" section="actionPlan" />
           {expandedSections.actionPlan && (
             <div className="p-4 sm:p-6">
@@ -135,7 +135,7 @@ export default function Dashboard() {
         </div>
 
         {/* Ticket Form Section */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm">
           <SectionHeader title="Nouveau Ticket" section="ticketForm" />
           {expandedSections.ticketForm && (
             <div className="p-4 sm:p-6">
@@ -145,7 +145,7 @@ export default function Dashboard() {
         </div>
 
         {/* Feedback Section */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-dark rounded-xl shadow-sm">
           <SectionHeader title="Feedback" section="feedback" />
           {expandedSections.feedback && (
             <div className="p-4 sm:p-6">

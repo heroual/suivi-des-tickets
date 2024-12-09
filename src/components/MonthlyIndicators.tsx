@@ -107,16 +107,16 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
     total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-      <div className="p-4 sm:p-6 border-b border-gray-200">
+    <div className="bg-white dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden mb-6">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-dark-700">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <div className="flex items-start sm:items-center space-x-3">
-            <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mt-1 sm:mt-0" />
+            <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400 mt-1 sm:mt-0" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
                 Indicateurs du Mois
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {format(startOfMonth(selectedDate), 'd MMMM', { locale: fr })} au {format(endOfMonth(selectedDate), 'd MMMM', { locale: fr })}
               </p>
             </div>
@@ -142,103 +142,113 @@ export default function MonthlyIndicators({ tickets }: MonthlyIndicatorsProps) {
 
       <div className="p-4 sm:p-6">
         {/* KPI Cards - Mobile First Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-6">
-          <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Tickets */}
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm text-blue-900 font-medium">Total Tickets</h3>
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            </div>
-            <p className="text-lg sm:text-3xl font-bold text-blue-900 mt-1 sm:mt-2">{stats.total}</p>
-          </div>
-
-          <div className="bg-green-50 rounded-lg p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm text-green-900 font-medium">Résolus</h3>
-              <div className="text-xs sm:text-sm font-medium text-green-600">
-                {getPercentage(stats.resolved, stats.total)}%
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tickets</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
+              </div>
+              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2">
+                <FileSpreadsheet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-            <p className="text-lg sm:text-3xl font-bold text-green-900 mt-1 sm:mt-2">{stats.resolved}</p>
           </div>
 
-          <div className="bg-amber-50 rounded-lg p-3 sm:p-4">
+          {/* Resolved Tickets */}
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm text-amber-900 font-medium">Dans les Délais</h3>
-              <div className="text-xs sm:text-sm font-medium text-amber-600">
-                {getPercentage(stats.onTime, stats.total)}%
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tickets Résolus</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.resolved}</p>
+              </div>
+              <div className="bg-green-100 dark:bg-green-900 rounded-full p-2">
+                <Calendar className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
-            <p className="text-lg sm:text-3xl font-bold text-amber-900 mt-1 sm:mt-2">{stats.onTime}</p>
           </div>
 
-          <div className="bg-red-50 rounded-lg p-3 sm:p-4">
+          {/* On Time Tickets */}
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm text-red-900 font-medium">Réouvertures</h3>
-              <div className="text-xs sm:text-sm font-medium text-red-600">
-                {getPercentage(stats.reopened, stats.total)}%
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Dans les Délais</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.onTime}</p>
+              </div>
+              <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-2">
+                <TrendingUp className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
-            <p className="text-lg sm:text-3xl font-bold text-red-900 mt-1 sm:mt-2">{stats.reopened}</p>
+          </div>
+
+          {/* Reopened Tickets */}
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tickets Réouverts</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.reopened}</p>
+              </div>
+              <div className="bg-red-100 dark:bg-red-900 rounded-full p-2">
+                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {showDetails && (
-          <div className="space-y-6">
-            {/* Causes */}
-            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Répartition par Type de Cause</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {Object.entries(stats.byCause).map(([cause, count]) => (
-                  <div key={cause} className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">{cause}</span>
-                      <span className="text-xs text-gray-600">
-                        {getPercentage(count, stats.total)}%
-                      </span>
-                    </div>
-                    <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 sm:mt-2">{count}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Details Section */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+          >
+            <Filter className="w-4 h-4" />
+            <span>{showDetails ? 'Masquer les détails' : 'Afficher les détails'}</span>
+          </button>
 
-            {/* Services */}
-            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Répartition par Service</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {Object.entries(stats.byService).map(([service, count]) => (
-                  <div key={service} className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">{service}</span>
-                      <span className="text-xs text-gray-600">
-                        {getPercentage(count, stats.total)}%
-                      </span>
+          {showDetails && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* By Cause */}
+              <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Par Cause</h3>
+                <div className="space-y-2">
+                  {Object.entries(stats.byCause).map(([cause, count]) => (
+                    <div key={cause} className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">{cause}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{count}</span>
                     </div>
-                    <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 sm:mt-2">{count}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Techniciens */}
-            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Répartition par Technicien</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {Object.entries(stats.byTechnician).map(([tech, count]) => (
-                  <div key={tech} className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">{tech}</span>
-                      <span className="text-xs text-gray-600">
-                        {getPercentage(count, stats.total)}%
-                      </span>
+              {/* By Service */}
+              <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Par Service</h3>
+                <div className="space-y-2">
+                  {Object.entries(stats.byService).map(([service, count]) => (
+                    <div key={service} className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">{service}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{count}</span>
                     </div>
-                    <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 sm:mt-2">{count}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* By Technician */}
+              <div className="bg-white dark:bg-dark-800 rounded-lg shadow p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Par Technicien</h3>
+                <div className="space-y-2">
+                  {Object.entries(stats.byTechnician).map(([tech, count]) => (
+                    <div key={tech} className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">{tech}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{count}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
